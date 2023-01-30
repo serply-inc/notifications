@@ -7,10 +7,10 @@ features:
     display_name: serply.io
     always_online: true
   slash_commands:
-    - command: /serply:serp
+    - command: /serply
       url: API_URL
       description: Create SERP scheduled notifications
-      usage_hint: google.com google+search+api daily
+      usage_hint: serp google.com "google+search+api" daily
       should_escape: true
 oauth_config:
   scopes:
