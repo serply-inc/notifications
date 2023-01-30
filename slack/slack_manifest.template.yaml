@@ -3,6 +3,10 @@ display_information:
   description: Manage scheduled notifications for serply.io
   background_color: "#F03E2F"
 features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: false
+    messages_tab_read_only_enabled: false
   bot_user:
     display_name: serply.io
     always_online: true
