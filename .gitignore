@@ -1,0 +1,24 @@
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+NOTES.md
+template.yaml
+.env
+
+src/bin
+src/dotenv
+src/python_dotenv*
+src/slack*
+
+serply_notifications/metadata.txt
+slack_manifest.*.yaml
+!slack_manifest.template.yaml
+serply.outputs.json

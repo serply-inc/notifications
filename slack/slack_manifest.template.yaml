@@ -1,0 +1,28 @@
+display_information:
+  name: serply.io
+  description: Manage scheduled notifications for serply.io
+  background_color: "#F03E2F"
+features:
+  bot_user:
+    display_name: serply.io
+    always_online: true
+  slash_commands:
+    - command: /serply:serp
+      url: API_URL
+      description: Create SERP scheduled notifications
+      usage_hint: google.com google+search+api daily
+      should_escape: true
+oauth_config:
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - chat:write.public
+      - channels:history
+      - app_mentions:read
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_home_opened
+      - message.app_home
+  request_url: API_URL
