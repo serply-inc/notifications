@@ -88,7 +88,7 @@ class SerplyNotificationsStack(Stack):
         notifications_rest_api = apigateway.RestApi(
             self, 'SerplyNotificationsRestApi',
             default_cors_preflight_options=cors_options,
-            endpoint_export_name=f'SerplyNotificationsRestApiUrl',
+            endpoint_export_name=f'SerplyNotificationsRestApiUrl{stage_name.title()}',
             deploy_options=apigateway.StageOptions(
                 stage_name=stage_name,
             ),
