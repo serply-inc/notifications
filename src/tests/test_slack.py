@@ -15,28 +15,28 @@ def test_slack_parse_command():
             'query': 'foo+bar',
             'interval': 'daily',
         },
-        'serp <http://google.com> "q=foo+bar"': {
+        'serp <http://google.com> "foo+bar"': {
             'type': 'serp',
             'domain': None,
             'website': 'http://google.com',
             'query': 'foo+bar',
             'interval': 'daily',
         },
-        'serp <http://google.com> "q=foo+bar" daily': {
+        'serp <http://google.com> "foo+bar" daily': {
             'type': 'serp',
             'domain': None,
             'website': 'http://google.com',
             'query': 'foo+bar',
             'interval': 'daily',
         },
-        'serp <http://google.com> "q=foo+bar" weekly': {
+        'serp <http://google.com> "foo+bar" weekly': {
             'type': 'serp',
             'domain': None,
             'website': 'http://google.com',
             'query': 'foo+bar',
             'interval': 'weekly',
         },
-        'serp <http://google.com> "q=foo+bar" monthly': {
+        'serp <http://google.com> "foo+bar" monthly': {
             'type': 'serp',
             'domain': None,
             'website': 'http://google.com',
