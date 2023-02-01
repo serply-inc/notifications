@@ -48,7 +48,7 @@ python3 install.py secrets
 ### Creating a SERP Scheduled Notification
 
 ```yaml
-/slerpy serp google.com "google+search" daily
+/serply serp google.com "google+search" daily
 ```
 
 ---
@@ -108,3 +108,6 @@ command.
  * `cdk docs`        open CDK documentation
 
 Enjoy!
+
+
+cdk synth --no-staging > template.yaml --profile cloudchemy

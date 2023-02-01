@@ -1,5 +1,16 @@
-from dataclasses import dataclass, field
-from utils import default_account, datetime_string
+
+import datetime
+from dataclasses import asdict, dataclass, field, is_dataclass
+from os import getenv
+from config import STAGE
+
+
+def default_account():
+    return getenv('DEFAULT_ACCOUNT', '98a64bf66ad64b7aa23227d882d91249')
+
+
+def datetime_string():
+    return datetime.today().isoformat()
 
 
 @dataclass
@@ -46,21 +57,25 @@ class Serp:
         ])
 
 
-class NotificationProvider:
+class NotificationsDatabase:
 
-    def __init__(self, serply: object, repository: object, secrets: object) -> None:
-        self._repository = repository
-        self._secrets = secrets
-        self._serply = serply
+    def __init__(self, dynamodb: object) -> None:
+        self._dynamodb = dynamodb
 
-    def configure(self, event: dict, context: dict):
-        print('configure is not implemented')
-        print(input)
+    def table(self):
+        return self._dynamodb.Table(f'SerplyNotifications-{STAGE}')
 
-    def notify(self, event: dict, context: dict):
-        print('notify is not implemented')
-        print(input)
+    def put(self, obj):
 
-    def serp(self, event: dict, context: dict):
-        print('serp is not implemented')
-        print(input)
+        if is_dataclass(obj):
+            obj = asdict(obj)
+
+        item = dict()
+
+        for k, v in obj.items():
+            if type(v) == str and len(v) > 0 or type(v) != str:
+                item[k] = v
+
+        self.table().put_item(
+            Item=item,
+        )

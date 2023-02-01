@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-import os
 import aws_cdk as cdk
-from src.config import SRC_DIR, STAGE
-from serply_notifications.serply_notifications_stack import SerplyNotificationsStack
-
+from os import getenv
+from cdk.serply_notifications_stack import SerplyNotificationsStack
+from config import DEFAULT_ACCOUNT, STAGE, SRC_DIR
 
 app = cdk.App()
 
@@ -26,9 +25,10 @@ app = cdk.App()
 SerplyNotificationsStack(
     app, f'SerplyNotificationsStack{STAGE.title()}',
     env=None,
-    serply_config={
-        'src_dir': SRC_DIR,
-        'stage': STAGE,
+    config={
+        'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
+        'SRC_DIR': SRC_DIR,
+        'STAGE': STAGE,
     },
 )
 

@@ -16,8 +16,8 @@ class Serply:
 
     _api: str = 'https://api.serply.io/v1'
 
-    def __init__(self, secrets) -> None:
-        self._secrets = secrets
+    def __init__(self, config) -> None:
+        self._config = config
 
     def serp(
         self,
@@ -47,7 +47,7 @@ class Serply:
     def get(self, url: str, data: dict, headers: dict = {}):
 
         request_headers = {
-            'X-Api-Key': self._secrets.get('SERPLY_API_KEY'),
+            'X-Api-Key': self._config.get('SERPLY_API_KEY'),
             'Content-Type': 'application/json',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
