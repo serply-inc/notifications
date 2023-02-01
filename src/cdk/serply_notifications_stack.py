@@ -41,11 +41,11 @@ class SerplyNotificationsStack(Stack):
             actions=['events:PutEvents'],
         )
 
-        slack_acknowledge_lambda = _lambda.Function(
-            self, 'SlackAcknowledgeLambdaFunction',
+        slack_command_lambda = _lambda.Function(
+            self, 'SlackCommandLambdaFunction',
             runtime=_lambda.Runtime.PYTHON_3_9,
             code=_lambda.Code.from_asset(SLACK_DIR),
-            handler='slack_acknowledge_lambda.handler',
+            handler='slack_command_lambda.handler',
             timeout=Duration.seconds(5),
             environment={
                 'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
@@ -53,7 +53,7 @@ class SerplyNotificationsStack(Stack):
             },
         )
         
-        slack_acknowledge_lambda.add_to_role_policy(event_bus_put_policy)
+        slack_command_lambda.add_to_role_policy(event_bus_put_policy)
 
         slack_respond_lambda = _lambda.Function(
             self, 'SlackRespondLambdaFunction',
@@ -68,7 +68,7 @@ class SerplyNotificationsStack(Stack):
             },
         )
 
-        # slack_acknowledge_lambda_function = _lambda.Function(
+        # slack_command_lambda_function = _lambda.Function(
         #     self, 'NotificationsConfigureLambdaFunction',
         #     runtime=_lambda.Runtime.PYTHON_3_9,
         #     code=_lambda.Code.from_asset(SRC_DIR),
@@ -83,7 +83,7 @@ class SerplyNotificationsStack(Stack):
         #     on_success=lambda_destinations.LambdaDestination(save_lambda_function)
         # )
 
-        # slack_acknowledge_lambda_function = _lambda.Function(
+        # slack_command_lambda_function = _lambda.Function(
         #     self, 'NotificationsConfigureLambdaFunction',
         #     runtime=_lambda.Runtime.PYTHON_3_9,
         #     code=_lambda.Code.from_asset('slack'),
@@ -128,22 +128,18 @@ class SerplyNotificationsStack(Stack):
         #     removal_policy=RemovalPolicy.RETAIN,
         # )
 
-        slack_acknowledge_event_rule = events.Rule(
-            self, 'SlackAcknowledgeEventRule',
+        slack_command_event_rule = events.Rule(
+            self, 'SlackCommandEventRule',
             event_bus=event_bus,
             event_pattern=events.EventPattern(
-                source=["io.serply"],
-                detail_type=['slack.acknowledge'],
+                source=["serply"],
+                detail_type=['serp'],
             )
         )
         
-        slack_acknowledge_event_rule.add_target(
+        slack_command_event_rule.add_target(
             events_targets.LambdaFunction(slack_respond_lambda)
         )
-        # slack_respond_lambda.grant_invoke(slack_acknowledge_event_rule)
-
-        # slack_respond_lambda.grant
-
 
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
@@ -178,23 +174,23 @@ class SerplyNotificationsStack(Stack):
             # )
         )
 
-        slack_acknowledge_lambda_integration = apigateway.LambdaIntegration(
-            handler=slack_acknowledge_lambda,
+        slack_command_lambda_integration = apigateway.LambdaIntegration(
+            handler=slack_command_lambda,
         )
 
         rest_api_resource = rest_api.root.add_resource('slack')
 
         rest_api_resource_proxy = rest_api_resource.add_proxy(
-            default_integration=slack_acknowledge_lambda_integration,
+            default_integration=slack_command_lambda_integration,
             any_method=True,
         )
 
         rest_api_method = rest_api_resource.add_method(
             http_method='POST',
-            integration=slack_acknowledge_lambda_integration,
+            integration=slack_command_lambda_integration,
         )
 
-        # slack_acknowledge_lambda_function.role.attach_inline_policy(lazy_lambda_invocation_inline_policy)
+        # slack_command_lambda_function.role.attach_inline_policy(lazy_lambda_invocation_inline_policy)
 
         # ssm_inline_policy = iam.Policy(
         #     self, 'NotificationsSSMParametersReadPolicy',
@@ -206,10 +202,10 @@ class SerplyNotificationsStack(Stack):
         #     ]
         # )
 
-        # slack_acknowledge_lambda_function.role.attach_inline_policy(ssm_inline_policy)
+        # slack_command_lambda_function.role.attach_inline_policy(ssm_inline_policy)
         # serp_lambda_function.role.attach_inline_policy(ssm_inline_policy)
         # notify_lambda_function.role.attach_inline_policy(ssm_inline_policy)
 
-        # notifications_dynamodb_table.grant_read_write_data(slack_acknowledge_lambda_function)
+        # notifications_dynamodb_table.grant_read_write_data(slack_command_lambda_function)
         # notifications_dynamodb_table.grant_read_write_data(serp_lambda_function)
         # notifications_dynamodb_table.grant_read_data(notify_lambda_function)

@@ -1,5 +1,7 @@
 import boto3
 import json
+from api import SlackCommand
+from dataclasses import asdict
 from os import getenv
 from urllib.parse import parse_qs
 
@@ -32,28 +34,29 @@ def handler(event, context):
 
     headers = event.get('headers')
     data = parse_qs(event.get('body'))
+    command = SlackCommand(text=get(data, 'text'))
 
     # @todo validated signature or raise exception
+
     events.put_events(Entries=[
         {
-            'Source': 'io.serply',
-            'DetailType': 'slack.acknowledge',
+            'Source': 'serply',
+            'DetailType': command.type,
             'Resources': [],
             'Detail': json.dumps({
-                'data': {
-                    'command': get(data, 'command'),
-                    'text': get(data, 'text'),
-                    'team_id': get(data, 'team_id'),
-                    'team_domain': get(data, 'team_domain'),
-                    'channel_id': get(data, 'channel_id'),
-                    'channel_name': get(data, 'channel_name'),
-                    'user_id': get(data, 'user_id'),
-                    'user_name': get(data, 'user_name'),
-                    'api_app_id': get(data, 'api_app_id'),
-                    'response_url': get(data, 'response_url'),
-                    'trigger_id': get(data, 'trigger_id'),
-                    'stage': STAGE,
-                },
+                'provider': 'slack',
+                'text': get(data, 'text'),
+                'team_id': get(data, 'team_id'),
+                'team_domain': get(data, 'team_domain'),
+                'channel_id': get(data, 'channel_id'),
+                'channel_name': get(data, 'channel_name'),
+                'user_id': get(data, 'user_id'),
+                'user_name': get(data, 'user_name'),
+                'api_app_id': get(data, 'api_app_id'),
+                'response_url': get(data, 'response_url'),
+                'trigger_id': get(data, 'trigger_id'),
+                'stage': STAGE,
+                'command': asdict(command),
                 'headers': {
                     'X-Amzn-Trace-Id': headers.get('X-Amzn-Trace-Id'),
                     'X-Slack-Request-Timestamp': headers.get('X-Slack-Request-Timestamp'),
