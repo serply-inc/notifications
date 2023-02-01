@@ -4,7 +4,6 @@
 # from services.repositories import DynamoDBNotificationsRepository
 
 
-
 # def default_account():
 #     return getenv('ACCOUNT')
 

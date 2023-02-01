@@ -1,5 +1,8 @@
 {
     "python.analysis.extraPaths": [
-        "./src"
+        "./src",
+        "./src/integration_slack",
+        "./src/serply",
+        "./src/serply/python"
     ]
 }

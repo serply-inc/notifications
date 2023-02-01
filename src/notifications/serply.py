@@ -12,7 +12,7 @@ class SerpResponse:
     query: str
 
 
-class Serply:
+class SerplyClient:
 
     _api: str = 'https://api.serply.io/v1'
 

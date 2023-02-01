@@ -2,7 +2,7 @@
 import datetime
 from dataclasses import asdict, dataclass, field, is_dataclass
 from os import getenv
-from config import STAGE
+from serply_config import STAGE
 
 
 def default_account():

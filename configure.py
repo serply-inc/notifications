@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
 import sys
-from config import Config, get_parameter_name, STAGE
+from serply_config import Config, get_parameter_name, STAGE
 from dotenv import load_dotenv
 from os import getenv, system
 from pathlib import Path

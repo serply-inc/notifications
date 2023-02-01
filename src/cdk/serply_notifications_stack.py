@@ -21,14 +21,22 @@ class SerplyNotificationsStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # @todo Add tags
-
+        RUNTIME = _lambda.Runtime.PYTHON_3_9
         DEFAULT_ACCOUNT = config['DEFAULT_ACCOUNT']
         STAGE = config['STAGE']
         SRC_DIR = config['SRC_DIR']
         SLACK_DIR = f'{SRC_DIR}/integration_slack'
-        SERPLY_DIR = f'{SRC_DIR}/serply'
+        NOTIFICATIONS_DIR = f'{SRC_DIR}/notifications'
+        LAYER_DIR = f'{SRC_DIR}/layer'
 
+        lambda_layer = _lambda.LayerVersion(self, "SerplyLambdaLayer",
+            code=_lambda.Code.from_asset(LAYER_DIR),
+            compatible_runtimes=[RUNTIME],
+            compatible_architectures=[
+                _lambda.Architecture.X86_64, 
+                _lambda.Architecture.ARM_64,
+            ]
+        )
 
         event_bus = events.EventBus(
             self, 'NotificationsEventBus', 
@@ -43,7 +51,7 @@ class SerplyNotificationsStack(Stack):
 
         slack_command_lambda = _lambda.Function(
             self, 'SlackCommandLambdaFunction',
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=RUNTIME,
             code=_lambda.Code.from_asset(SLACK_DIR),
             handler='slack_command_lambda.handler',
             timeout=Duration.seconds(5),
@@ -57,7 +65,7 @@ class SerplyNotificationsStack(Stack):
 
         slack_respond_lambda = _lambda.Function(
             self, 'SlackRespondLambdaFunction',
-            runtime=_lambda.Runtime.PYTHON_3_9,
+            runtime=RUNTIME,
             code=_lambda.Code.from_asset(SLACK_DIR),
             handler='slack_respond_lambda.handler',
             timeout=Duration.seconds(5),
@@ -68,22 +76,23 @@ class SerplyNotificationsStack(Stack):
             },
         )
 
-        # slack_notification_put_lambda = _lambda.Function(
-        #     self, 'SlackNotificationPutLambdaFunction',
-        #     runtime=_lambda.Runtime.PYTHON_3_9,
-        #     code=_lambda.Code.from_asset(SLACK_DIR),
-        #     handler='slack_notification_put_lambda.handler',
-        #     timeout=Duration.seconds(5),
-        #     # on_success=lambda_destinations.EventBridgeDestination(event_bus),
-        #     environment={
-        #         'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-        #         'STAGE': STAGE,
-        #     },
-        # )
+        notification_put_lambda = _lambda.Function(
+            self, 'NotificationPutLambdaFunction',
+            runtime=RUNTIME,
+            code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
+            handler='notification_put_lambda.handler',
+            timeout=Duration.seconds(5),
+            layers=[lambda_layer],
+            # on_success=lambda_destinations.EventBridgeDestination(event_bus),
+            environment={
+                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
+                'STAGE': STAGE,
+            },
+        )
 
         # slack_command_lambda_function = _lambda.Function(
         #     self, 'NotificationsConfigureLambdaFunction',
-        #     runtime=_lambda.Runtime.PYTHON_3_9,
+        #     runtime=RUNTIME,
         #     code=_lambda.Code.from_asset(SRC_DIR),
         #     handler='lambda_configure.handler',
         #     timeout=Duration.seconds(10),
@@ -98,7 +107,7 @@ class SerplyNotificationsStack(Stack):
 
         # slack_command_lambda_function = _lambda.Function(
         #     self, 'NotificationsConfigureLambdaFunction',
-        #     runtime=_lambda.Runtime.PYTHON_3_9,
+        #     runtime=RUNTIME,
         #     code=_lambda.Code.from_asset('slack'),
         #     handler='lambda_slack.handler',
         #     timeout=Duration.seconds(5),
@@ -112,7 +121,7 @@ class SerplyNotificationsStack(Stack):
 
         # serp_lambda_function = _lambda.Function(
         #     self, 'NotificationsSerpLambdaFunction',
-        #     runtime=_lambda.Runtime.PYTHON_3_9,
+        #     runtime=RUNTIME,
         #     code=_lambda.Code.from_asset(SRC_DIR),
         #     handler='lambda_serp.handler',
         #     timeout=Duration.seconds(10),
@@ -120,7 +129,7 @@ class SerplyNotificationsStack(Stack):
 
         # notify_lambda_function = _lambda.Function(
         #     self, 'NotificationsNotifyLambdaFunction',
-        #     runtime=_lambda.Runtime.PYTHON_3_9,
+        #     runtime=RUNTIME,
         #     code=_lambda.Code.from_asset(SRC_DIR),
         #     handler='lambda_notify.handler',
         #     timeout=Duration.seconds(3),
@@ -154,6 +163,10 @@ class SerplyNotificationsStack(Stack):
             events_targets.LambdaFunction(slack_respond_lambda)
         )
 
+        slack_command_event_rule.add_target(
+            events_targets.LambdaFunction(notification_put_lambda)
+        )
+
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
             allow_methods=apigateway.Cors.ALL_METHODS,
@@ -168,23 +181,8 @@ class SerplyNotificationsStack(Stack):
             deploy_options=apigateway.StageOptions(
                 stage_name=STAGE,
                 data_trace_enabled=True,
-                # metrics_enabled=True,
                 logging_level=apigateway.MethodLoggingLevel.INFO,
             ),
-            # policy = iam.Policy(
-            #     self, 'NotificationsRestApiPolicy',
-            #     statements=[
-            #         iam.PolicyDocument(
-            #             actions=['*'],
-            #             resources=['AWS::ApiGateway::Account'],
-            #         ),
-            #         iam.PolicyStatement(
-            #             actions=[''],
-            #             principals=[iam.AccountRootPrincipal()],
-            #             resources=['*"]
-            #         )
-            #     ]
-            # )
         )
 
         slack_command_lambda_integration = apigateway.LambdaIntegration(
