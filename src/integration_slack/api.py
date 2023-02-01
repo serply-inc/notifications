@@ -1,7 +1,7 @@
 import json
 import re
 import urllib3
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, is_dataclass
 
 http = urllib3.PoolManager()
 
@@ -47,14 +47,22 @@ class SlackClient:
 
         try:            
 
+            if is_dataclass(data):
+                data = asdict(data)
+
+            request = json.dumps(data).encode('utf-8')
+
             response = http.request(
                 'POST',
                 url,
-                body=json.dumps(data).encode('utf-8'),
+                body=request,
                 headers={'Content-Type': 'application/json'}
             )
 
-            return json.loads(response.data.decode('utf-8'))['json']
+            return {
+                'request': request,
+                'response': json.loads(response.data.decode('utf-8'))['json'],
+            }
 
         except Exception as e:
 

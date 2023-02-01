@@ -1,9 +1,10 @@
-import ssl
 from dataclasses import asdict
+from integration_slack.api import SlackCommand
 
-ssl._create_default_https_context = ssl._create_unverified_context
 
-from providers.notification_provider_slack import SlackCommandParser
+def test_slack_notification_scheduled_message_command():
+    pass
+
 
 def test_slack_parse_command():
 
@@ -54,6 +55,6 @@ def test_slack_parse_command():
     ]
 
     for command, expected_dictionary in commands.items():
-        command_dict = asdict(SlackCommandParser(command))
+        command_dict = asdict(SlackCommand(command))
         for key in keys:
             assert command_dict.get(key) == expected_dictionary.get(key)

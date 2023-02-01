@@ -1,6 +1,5 @@
 {
     "python.analysis.extraPaths": [
-        "./src/__requirements__",
-        "./src/slack"
+        "./src"
     ]
 }

@@ -63,7 +63,7 @@ class NotificationsDatabase:
         self._dynamodb = dynamodb
 
     def table(self):
-        return self._dynamodb.Table(f'SerplyNotifications-{STAGE}')
+        return self._dynamodb.Table(f'SerplyNotifications{STAGE.title()}')
 
     def put(self, obj):
 

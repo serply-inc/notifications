@@ -26,7 +26,7 @@ class SerplyNotificationsStack(Stack):
         DEFAULT_ACCOUNT = config['DEFAULT_ACCOUNT']
         STAGE = config['STAGE']
         SRC_DIR = config['SRC_DIR']
-        SLACK_DIR = f'{SRC_DIR}/slack'
+        SLACK_DIR = f'{SRC_DIR}/integration_slack'
         SERPLY_DIR = f'{SRC_DIR}/serply'
 
 
@@ -67,6 +67,19 @@ class SerplyNotificationsStack(Stack):
                 'STAGE': STAGE,
             },
         )
+
+        # slack_notification_put_lambda = _lambda.Function(
+        #     self, 'SlackNotificationPutLambdaFunction',
+        #     runtime=_lambda.Runtime.PYTHON_3_9,
+        #     code=_lambda.Code.from_asset(SLACK_DIR),
+        #     handler='slack_notification_put_lambda.handler',
+        #     timeout=Duration.seconds(5),
+        #     # on_success=lambda_destinations.EventBridgeDestination(event_bus),
+        #     environment={
+        #         'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
+        #         'STAGE': STAGE,
+        #     },
+        # )
 
         # slack_command_lambda_function = _lambda.Function(
         #     self, 'NotificationsConfigureLambdaFunction',
