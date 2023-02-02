@@ -3,12 +3,12 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_events as events,
     aws_events_targets as events_targets,
+    aws_iam as iam,
     aws_lambda as _lambda,
     aws_lambda_destinations as lambda_destinations,
     aws_lambda_event_sources as lambda_event_sources,
-    aws_iam as iam,
-    aws_sns as sns,
-    aws_sqs as sqs,
+    aws_scheduler as scheduler,
+    CfnTag,
     Duration,
     RemovalPolicy,
     Stack,
@@ -24,6 +24,7 @@ class SerplyStack(Stack):
         RUNTIME = _lambda.Runtime.PYTHON_3_9
         DEFAULT_ACCOUNT = config['DEFAULT_ACCOUNT']
         SERPLY_API_KEY = config['SERPLY_API_KEY']
+        SERPLY_TIMEZONE = config['SERPLY_TIMEZONE']
         STAGE = config['STAGE']
         SRC_DIR = config['SRC_DIR']
         LAYER_DIR = f'{SRC_DIR}/layer'
@@ -43,11 +44,22 @@ class SerplyStack(Stack):
             self, 'NotificationsEventBus', 
             event_bus_name=f'NotificationsEventBus{STAGE.title()}',
         )
+        
         event_bus.apply_removal_policy(RemovalPolicy.DESTROY)
-        event_bus_put_policy = iam.PolicyStatement(
-            effect=iam.Effect.ALLOW, 
-            resources=['*'], 
-            actions=['events:PutEvents'],
+        
+        # event_bus_put_policy = iam.PolicyStatement(
+        #     effect=iam.Effect.ALLOW, 
+        #     resources=['*'], 
+        #     actions=['events:PutEvents'],
+        # )
+
+        notification_scheduler_lambda_role = iam.Role(
+            self, "NotificationSchedulerRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            role_name=f'NotificationSchedulerRole{STAGE.title()}',
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEventBridgeSchedulerFullAccess"),
+            ],
         )
 
         slack_command_lambda = _lambda.Function(
@@ -62,7 +74,8 @@ class SerplyStack(Stack):
             },
         )
         
-        slack_command_lambda.add_to_role_policy(event_bus_put_policy)
+        event_bus.grant_put_events_to(slack_command_lambda)
+        # slack_command_lambda.add_to_role_policy(event_bus_put_policy)
 
         slack_respond_lambda = _lambda.Function(
             self, 'SlackRespondLambdaFunction',
@@ -84,8 +97,10 @@ class SerplyStack(Stack):
             handler='notification_put_lambda.handler',
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
+            role=notification_scheduler_lambda_role,
             # on_success=lambda_destinations.EventBridgeDestination(event_bus),
             environment={
+                'SERPLY_TIMEZONE': SERPLY_TIMEZONE,
                 'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
                 'STAGE': STAGE,
             },
@@ -104,6 +119,26 @@ class SerplyStack(Stack):
                 'STAGE': STAGE,
             },
         )
+
+        slack_command_event_rule = events.Rule(
+            self, 'SlackCommandEventRule',
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=["serply"],
+                detail_type=[
+                    'serp',
+                    # 'search', # additional commands can be added
+                ],
+            ),
+            targets=[
+                events_targets.LambdaFunction(slack_respond_lambda),
+                events_targets.LambdaFunction(notification_put_lambda),
+            ],
+        )
+        
+        slack_command_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
+
+
 
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
@@ -157,23 +192,9 @@ class SerplyStack(Stack):
         notifications_dynamodb_table.grant_read_write_data(notification_put_lambda)
         notifications_dynamodb_table.grant_read_write_data(notification_serp_lambda)
 
-        slack_command_event_rule = events.Rule(
-            self, 'SlackCommandEventRule',
-            event_bus=event_bus,
-            event_pattern=events.EventPattern(
-                source=["serply"],
-                detail_type=[
-                    'serp',
-                    # 'search', # additional commands can be added
-                ],
-            ),
-            targets=[
-                events_targets.LambdaFunction(slack_respond_lambda),
-                events_targets.LambdaFunction(notification_put_lambda),
-            ],
+        schedule_group = scheduler.CfnScheduleGroup(self, "NotificationScheduleGroup",
+            name=f'NotificationScheduleGroup{STAGE.title()}',
         )
-        
-        slack_command_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
         # rule = events.Rule(self, "Rule",
         #     schedule=events.Schedule.rate(cdk.Duration.minutes(1)),

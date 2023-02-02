@@ -1,8 +1,8 @@
 import boto3
+from dataclasses import asdict
 from os import getenv
 from serply_api import SerplyClient
 from serply_database import NotificationsDatabase, Serp
-
 
 notifications = NotificationsDatabase(boto3.resource('dynamodb'))
 serply = SerplyClient(getenv('SERPLY_API_KEY'))
@@ -17,19 +17,24 @@ def handler(event, context):
     query = 'developer+blog'
     interval = 'test'
 
-    serp = serply.serp(domain=domain, query=query)
+    response = serply.serp(domain=domain, query=query)
 
-    notifications.put(Serp(
+    serp = Serp(
         NOTIFICATION_PK=NOTIFICATION_PK,
         NOTIFICATION_SK=NOTIFICATION_SK,
         domain=domain,
         domain_or_website=domain_or_website,
         query=query,
         interval=interval,
-        serp_position=serp.position,
-        serp_searched_results=serp.searched_results,
-        serp_domain=serp.domain,
-        serp_query=serp.query,
-    ))
+        serp_position=response.position,
+        serp_searched_results=response.searched_results,
+        serp_domain=response.domain,
+        serp_query=response.query,
+        serp_title=response.title,
+        serp_link=response.link,
+        serp_description=response.description,
+    )
 
-    return {'ok': True}
+    notifications.put(serp)
+
+    return asdict(serp)

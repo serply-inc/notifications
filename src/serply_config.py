@@ -12,10 +12,13 @@ DEFAULT_ACCOUNT = getenv('ACCOUNT', '98a64bf66ad64b7aa23227d882d91249')
 SRC_DIR = path.dirname(path.realpath(__file__))
 ROOT_DIR = path.dirname(SRC_DIR)
 SERPLY_API_KEY = getenv('SERPLY_API_KEY')
+# List of valid timezone regions 
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+SERPLY_TIMEZONE = getenv('SERPLY_TIMEZONE', 'America/Chicago')
 
 
 def default_account():
-    return getenv('DEFAULT_ACCOUNT', '98a64bf66ad64b7aa23227d882d91249')
+    return DEFAULT_ACCOUNT
 
 
 def datetime_string():
