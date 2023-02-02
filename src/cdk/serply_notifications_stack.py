@@ -90,81 +90,12 @@ class SerplyNotificationsStack(Stack):
             },
         )
 
-        # slack_command_lambda_function = _lambda.Function(
-        #     self, 'NotificationsConfigureLambdaFunction',
-        #     runtime=RUNTIME,
-        #     code=_lambda.Code.from_asset(SRC_DIR),
-        #     handler='lambda_configure.handler',
-        #     timeout=Duration.seconds(10),
-        # environment={
-        #     'SLACK_BOT_TOKEN': getenv('SLACK_BOT_TOKEN'),
-        #     'SLACK_SIGNING_SECRET': getenv('SLACK_SIGNING_SECRET'),
-        #     'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-        #     'STAGE': STAGE,
-        # },
-        #     on_success=lambda_destinations.LambdaDestination(save_lambda_function)
-        # )
-
-        # slack_command_lambda_function = _lambda.Function(
-        #     self, 'NotificationsConfigureLambdaFunction',
-        #     runtime=RUNTIME,
-        #     code=_lambda.Code.from_asset('slack'),
-        #     handler='lambda_slack.handler',
-        #     timeout=Duration.seconds(5),
-        #     on_success=lambda_destinations.LambdaDestination(save_lambda_function),
-        #     # environment={
-        #     #     'SLACK_BOT_TOKEN': getenv('SLACK_BOT_TOKEN'),
-        #     #     # 'SLACK_SIGNING_SECRET': getenv('SLACK_SIGNING_SECRET'),
-        #     #     'STAGE': STAGE
-        #     # },
-        # )
-
-        # serp_lambda_function = _lambda.Function(
-        #     self, 'NotificationsSerpLambdaFunction',
-        #     runtime=RUNTIME,
-        #     code=_lambda.Code.from_asset(SRC_DIR),
-        #     handler='lambda_serp.handler',
-        #     timeout=Duration.seconds(10),
-        # )
-
-        # notify_lambda_function = _lambda.Function(
-        #     self, 'NotificationsNotifyLambdaFunction',
-        #     runtime=RUNTIME,
-        #     code=_lambda.Code.from_asset(SRC_DIR),
-        #     handler='lambda_notify.handler',
-        #     timeout=Duration.seconds(3),
-        # )
-
-        # notifications_dynamodb_table = dynamodb.Table(
-        #     self, 'NotificationsDynamoDBTable',
-        #     table_name=f'Notifications-{STAGE}',
-        #     partition_key=dynamodb.Attribute(
-        #         name='PK',
-        #         type=dynamodb.AttributeType.STRING,
-        #     ),
-        #     sort_key=dynamodb.Attribute(
-        #         name='SK',
-        #         type=dynamodb.AttributeType.STRING,
-        #     ),
-        #     billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-        #     removal_policy=RemovalPolicy.RETAIN,
-        # )
-
-        slack_command_event_rule = events.Rule(
-            self, 'SlackCommandEventRule',
-            event_bus=event_bus,
-            event_pattern=events.EventPattern(
-                source=["serply"],
-                detail_type=['serp'],
-            )
-        )
-        
-        slack_command_event_rule.add_target(
-            events_targets.LambdaFunction(slack_respond_lambda)
-        )
-
-        slack_command_event_rule.add_target(
-            events_targets.LambdaFunction(notification_put_lambda)
+        notification_serp_lambda = _lambda.Function(
+            self, 'NotificationSerpLambdaFunction',
+            runtime=RUNTIME,
+            code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
+            handler='notification_serp_lambda.handler',
+            timeout=Duration.seconds(5),
         )
 
         cors_options = apigateway.CorsOptions(
@@ -201,6 +132,46 @@ class SerplyNotificationsStack(Stack):
             integration=slack_command_lambda_integration,
         )
 
+        notifications_dynamodb_table = dynamodb.Table(
+            self, 'NotificationsDynamoDBTable',
+            table_name=f'SerplyNotifications{STAGE.title()}',
+            partition_key=dynamodb.Attribute(
+                name='PK',
+                type=dynamodb.AttributeType.STRING,
+            ),
+            sort_key=dynamodb.Attribute(
+                name='SK',
+                type=dynamodb.AttributeType.STRING,
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+        
+        notifications_dynamodb_table.grant_read_write_data(notification_put_lambda)
+
+        slack_command_event_rule = events.Rule(
+            self, 'SlackCommandEventRule',
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=["serply"],
+                detail_type=[
+                    'serp',
+                    # 'search', # additional commands can be added
+                ],
+            ),
+            targets=[
+                events_targets.LambdaFunction(slack_respond_lambda),
+                events_targets.LambdaFunction(notification_put_lambda),
+            ],
+        )
+
+        # rule = events.Rule(self, "Rule",
+        #     schedule=events.Schedule.rate(cdk.Duration.minutes(1)),
+        #     targets=[
+        #         events_targets.LambdaFunction(destination),
+        #     ],
+        # )
+
         # slack_command_lambda_function.role.attach_inline_policy(lazy_lambda_invocation_inline_policy)
 
         # ssm_inline_policy = iam.Policy(
@@ -215,8 +186,5 @@ class SerplyNotificationsStack(Stack):
 
         # slack_command_lambda_function.role.attach_inline_policy(ssm_inline_policy)
         # serp_lambda_function.role.attach_inline_policy(ssm_inline_policy)
-        # notify_lambda_function.role.attach_inline_policy(ssm_inline_policy)
 
-        # notifications_dynamodb_table.grant_read_write_data(slack_command_lambda_function)
         # notifications_dynamodb_table.grant_read_write_data(serp_lambda_function)
-        # notifications_dynamodb_table.grant_read_data(notify_lambda_function)
