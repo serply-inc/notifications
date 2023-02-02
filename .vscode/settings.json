@@ -3,6 +3,7 @@
         "./src",
         "./src/integration_slack",
         "./src/serply",
-        "./src/serply/python"
+        "./src/serply/python",
+        "./src/notifications"
     ]
 }

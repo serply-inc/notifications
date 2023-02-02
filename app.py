@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from cdk.serply_notifications_stack import SerplyNotificationsStack
+from cdk.serply_stack import SerplyStack
 from serply_config import DEFAULT_ACCOUNT, STAGE, SRC_DIR
 
 app = cdk.App()
@@ -21,8 +21,8 @@ app = cdk.App()
 
 # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
 
-SerplyNotificationsStack(
-    app, f'SerplyNotificationsStack{STAGE.title()}',
+SerplyStack(
+    app, f'SerplyStack{STAGE.title()}',
     env=None,
     config={
         'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,

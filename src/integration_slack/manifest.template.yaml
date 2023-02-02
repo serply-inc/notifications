@@ -1,7 +1,7 @@
 display_information:
   name: serply.io
   description: Schedule notifications for serply.io
-  background_color: "#F03E2F"
+  background_color: "#000000"
 features:
   app_home:
     home_tab_enabled: false
@@ -13,7 +13,7 @@ features:
   slash_commands:
     - command: /serply
       url: API_URL
-      description: Create SERP scheduled notifications
+      description: Schedule SERP notifications
       usage_hint: serp google.com "google+search+api" daily
       should_escape: true
 oauth_config:

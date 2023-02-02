@@ -34,14 +34,13 @@ class Notification:
     domain_or_website: str = field(default_factory=default_domain_or_website)
     interval: str = field(default_factory=default_interval)
     provider: str = field(default_factory=default_provider)
-    query: str = ''
-    domain: str = ''
-    website: str = ''
+    query: str = None
+    domain: str = None
+    website: str = None
 
     def __post_init__(self):
         self.PK = f'notification_{self.account}'
         self.SK = '#'.join([
-            self.PK,
             f'interval_{self.interval}',
             f'domain_{self.domain}' if self.domain else f'website_{self.website}',
             f'query_{self.query}',
@@ -53,25 +52,27 @@ class Notification:
 class Serp:
     SK: str = field(init=False)
     PK: str = field(init=False)
+    serp_position: int
+    serp_searched_results: int
+    serp_domain: str
+    serp_query: str
+    domain_or_website: str
+    query: str
     account: str = field(default_factory=default_account)
     created_at: str = field(default_factory=datetime_string)
-    domain_or_website: str = field(default_factory=default_domain_or_website)
     interval: str = field(default_factory=default_interval)
     provider: str = field(default_factory=default_provider)
-    query: str = ''
-    domain: str = ''
-    website: str = ''
+    domain: str = None
+    website: str = None
 
     def __post_init__(self):
         self.PK = f'notification_{self.account}_serp'
         self.SK = '#'.join([
-            self.PK,
-            datetime_string(),
+            f'serp_{self.created_at}',
+            f'serp_domain_{self.serp_domain}',
             f'interval_{self.interval}',
-            f'domain_{self.domain}' if self.domain else f'website_{self.website}',
             f'query_{self.query}',
         ])
-        self.domain_or_website = 'domain' if self.domain else 'website'
 
 
 class NotificationsDatabase:

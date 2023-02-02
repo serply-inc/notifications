@@ -16,9 +16,9 @@ def find_value_by_key_start(data: dict, start: str):
 def slack_manifest(stage: str):
     outputs_file = open(f'cdk.out/serply_outputs_{stage}.json')
     outputs = json.load(outputs_file)
-    data = outputs[f'SerplyNotificationsStack{stage.title()}']
+    data = outputs[f'SerplyStack{stage.title()}']
 
-    manifest_file = Path('src/slack/manifest.template.yaml')
+    manifest_file = Path('src/integration_slack/manifest.template.yaml')
     manifest_template = manifest_file.read_text()
 
     api_url = find_value_by_key_start(data, 'NotificationsRestApiEndpoint')

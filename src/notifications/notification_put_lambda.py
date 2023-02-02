@@ -2,9 +2,10 @@ import boto3
 from os import getenv
 from serply_database import NotificationsDatabase, Notification
 
-notifications = NotificationsDatabase(boto3.resource('dynamodb'))
-
 DEFAULT_ACCOUNT = getenv('DEFAULT_ACCOUNT')
+
+
+notifications = NotificationsDatabase(boto3.resource('dynamodb'))
 
 
 def handler(event, context):

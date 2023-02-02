@@ -1,12 +1,13 @@
 import json
-import urllib
-from dataclasses import dataclass
+import urllib3
+from dataclasses import dataclass, asdict
+
+http = urllib3.PoolManager()
 
 
 @dataclass
 class SerpResponse:
     searched_results: int
-    result: dict
     position: int
     domain: str
     query: str
@@ -42,11 +43,16 @@ class SerplyClient:
             data=data
         )
 
-        return SerpResponse(response)
+        return SerpResponse(
+            searched_results=response.get('searched_results'),
+            position=response.get('position'),
+            domain=response.get('domain'),
+            query=response.get('query'),
+        )
 
-    def get(self, url: str, data: dict, headers: dict = {}):
+    def get(self, url: str, data: dict):
 
-        request_headers = {
+        headers = {
             'X-Api-Key': self._config.get('SERPLY_API_KEY'),
             'Content-Type': 'application/json',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
@@ -57,24 +63,18 @@ class SerplyClient:
             'Connection': 'keep-alive'
         }
 
-        request_headers.update(headers)
-
-        request_url = f'{url}/{urllib.parse.urlencode(data)}'
-
         try:
-            request = urllib.request.Request(
-                url=request_url,
-                headers=request_headers,
-                method='GET'
+
+            request = json.dumps(asdict(data)).encode('utf-8')
+
+            response = http.request(
+                'GET',
+                url=f'{url}/{urllib3.parse.urlencode(data)}',
+                body=request,
+                headers=headers
             )
 
-            content = request.urlopen(request)
-
-            data = content.read()
-
-            encoding = content.info().get_content_charset('utf-8')
-
-            return json.loads(data.decode(encoding))
+            return json.loads(response.data.decode('utf-8'))['json']
 
         except Exception as e:
 

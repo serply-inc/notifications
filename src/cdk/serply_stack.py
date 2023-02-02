@@ -16,7 +16,7 @@ from aws_cdk import (
 from constructs import Construct
 
 
-class SerplyNotificationsStack(Stack):
+class SerplyStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -96,6 +96,11 @@ class SerplyNotificationsStack(Stack):
             code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
             handler='notification_serp_lambda.handler',
             timeout=Duration.seconds(5),
+            layers=[lambda_layer],
+            environment={
+                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
+                'STAGE': STAGE,
+            },
         )
 
         cors_options = apigateway.CorsOptions(
@@ -144,10 +149,11 @@ class SerplyNotificationsStack(Stack):
                 type=dynamodb.AttributeType.STRING,
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.RETAIN,
+            removal_policy=RemovalPolicy.RETAIN if STAGE == 'prod' else RemovalPolicy.DESTROY,
         )
         
         notifications_dynamodb_table.grant_read_write_data(notification_put_lambda)
+        notifications_dynamodb_table.grant_read_write_data(notification_serp_lambda)
 
         slack_command_event_rule = events.Rule(
             self, 'SlackCommandEventRule',
@@ -164,6 +170,8 @@ class SerplyNotificationsStack(Stack):
                 events_targets.LambdaFunction(notification_put_lambda),
             ],
         )
+        
+        slack_command_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
         # rule = events.Rule(self, "Rule",
         #     schedule=events.Schedule.rate(cdk.Duration.minutes(1)),
