@@ -1,6 +1,8 @@
 import json
 import urllib3
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from urllib.parse import urlencode
+
 
 http = urllib3.PoolManager()
 
@@ -11,35 +13,42 @@ class SerpResponse:
     position: int
     domain: str
     query: str
+    title: str
+    link: str
+    description: str
 
 
 class SerplyClient:
 
     _api: str = 'https://api.serply.io/v1'
+    _api_key: str = None
 
-    def __init__(self, config) -> None:
-        self._config = config
+    def __init__(self, api_key: str) -> None:
+        self._api_key = api_key
 
     def serp(
         self,
         query: str,
-        num: int = 100,
         domain: str = None,
         website: str = None,
+        num: int = 100,
     ):
+        if domain is None and website is None:
+            raise Exception('SerplyClient.serp: domain or website required.')
+
         data = {
             'q': query,
             'num': num,
         }
 
         if domain is not None:
-            data.update({domain})
+            data['domain'] = domain
 
         if website is not None:
-            data.update({website})
+            data['website'] = website
 
         response = self.get(
-            url=f'{self._api}/serp',
+            path='serp',
             data=data
         )
 
@@ -48,12 +57,18 @@ class SerplyClient:
             position=response.get('position'),
             domain=response.get('domain'),
             query=response.get('query'),
+            title=response.get('result').get('title'),
+            description=response.get('result').get('description'),
+            link=response.get('result').get('link'),
         )
 
-    def get(self, url: str, data: dict):
+    def get(self, path: str, data: dict):
+
+        if self._api_key is None:
+            raise Exception('SERPLY_API_KEY required.')
 
         headers = {
-            'X-Api-Key': self._config.get('SERPLY_API_KEY'),
+            'X-Api-Key': self._api_key,
             'Content-Type': 'application/json',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -65,16 +80,18 @@ class SerplyClient:
 
         try:
 
-            request = json.dumps(asdict(data)).encode('utf-8')
+            body = json.dumps(data).encode('utf-8')
+
+            url = f'{self._api}/{path}/{urlencode(data)}'
 
             response = http.request(
                 'GET',
-                url=f'{url}/{urllib3.parse.urlencode(data)}',
-                body=request,
+                url=url,
+                body=body,
                 headers=headers
             )
 
-            return json.loads(response.data.decode('utf-8'))['json']
+            return json.loads(response.data.decode('utf-8'))
 
         except Exception as e:
 

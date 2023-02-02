@@ -1,36 +1,35 @@
 import boto3
 from os import getenv
-# from serply_api import SerplyClient
+from serply_api import SerplyClient
 from serply_database import NotificationsDatabase, Serp
 
-DEFAULT_ACCOUNT = getenv('DEFAULT_ACCOUNT')
 
-
-# serply = SerplyClient()
 notifications = NotificationsDatabase(boto3.resource('dynamodb'))
+serply = SerplyClient(getenv('SERPLY_API_KEY'))
 
 
 def handler(event, context):
 
-    # command = event.get('detail').get('command')
+    NOTIFICATION_PK = 'notification_98a64bf66ad64b7aa23227d882d91249'
+    NOTIFICATION_SK = 'domain_google.com#query_google+search+api'
+    domain = 'hashnode.com'
+    domain_or_website = 'domain'
+    query = 'developer+blog'
+    interval = 'test'
 
-    # notifications.put(Serp(
-    #     account=DEFAULT_ACCOUNT,
-    #     provider=command.get('provider'),
-    #     interval=command.get('interval'),
-    #     website=command.get('website'),
-    #     domain=command.get('domain'),
-    #     query=command.get('query'),
-    # ))
+    serp = serply.serp(domain=domain, query=query)
 
     notifications.put(Serp(
-        account=DEFAULT_ACCOUNT,
-        domain='hashnode.com',
-        query='developer+blog+platform',
-        serp_position=45,
-        serp_searched_results=67,
-        serp_domain='.hashnode.com',
-        serp_query='q="developer+blog+platform&num=100"',
+        NOTIFICATION_PK=NOTIFICATION_PK,
+        NOTIFICATION_SK=NOTIFICATION_SK,
+        domain=domain,
+        domain_or_website=domain_or_website,
+        query=query,
+        interval=interval,
+        serp_position=serp.position,
+        serp_searched_results=serp.searched_results,
+        serp_domain=serp.domain,
+        serp_query=serp.query,
     ))
 
     return {'ok': True}

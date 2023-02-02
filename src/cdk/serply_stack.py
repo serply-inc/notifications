@@ -23,11 +23,12 @@ class SerplyStack(Stack):
 
         RUNTIME = _lambda.Runtime.PYTHON_3_9
         DEFAULT_ACCOUNT = config['DEFAULT_ACCOUNT']
+        SERPLY_API_KEY = config['SERPLY_API_KEY']
         STAGE = config['STAGE']
         SRC_DIR = config['SRC_DIR']
-        SLACK_DIR = f'{SRC_DIR}/integration_slack'
-        NOTIFICATIONS_DIR = f'{SRC_DIR}/notifications'
         LAYER_DIR = f'{SRC_DIR}/layer'
+        NOTIFICATIONS_DIR = f'{SRC_DIR}/notifications'
+        SLACK_DIR = f'{SRC_DIR}/integration_slack'
 
         lambda_layer = _lambda.LayerVersion(self, "SerplyLambdaLayer",
             code=_lambda.Code.from_asset(LAYER_DIR),
@@ -98,6 +99,7 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
+                'SERPLY_API_KEY': SERPLY_API_KEY,
                 'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
                 'STAGE': STAGE,
             },

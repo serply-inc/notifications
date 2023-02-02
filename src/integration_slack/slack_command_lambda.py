@@ -10,6 +10,22 @@ STAGE = getenv("STAGE", 'dev')
 events = boto3.client('events')
 
 
+def validate_command(command):
+
+    valid_commands = ['serp']
+
+    # if parser.type not in valid_commands:
+    #     ack(
+    #         f'Please enter a valid command. Example: {COMMAND} serp google.com "google+search+api" daily')
+    #     return
+    # elif parser.query == None:
+    #     ack('A query is required in single or double quotes.')
+    #     return
+    # else:
+    #     ack()
+    pass
+
+
 def get_challenge(body):
     if not body.startswith('{') and not body.endswith('}'):
         return False

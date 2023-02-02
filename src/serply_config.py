@@ -1,3 +1,4 @@
+from datetime import datetime
 from dotenv import load_dotenv
 from os import getenv, path
 
@@ -10,7 +11,27 @@ AWS_PROFILE = getenv('AWS_PROFILE', 'default')
 DEFAULT_ACCOUNT = getenv('ACCOUNT', '98a64bf66ad64b7aa23227d882d91249')
 SRC_DIR = path.dirname(path.realpath(__file__))
 ROOT_DIR = path.dirname(SRC_DIR)
+SERPLY_API_KEY = getenv('SERPLY_API_KEY')
 
+
+def default_account():
+    return getenv('DEFAULT_ACCOUNT', '98a64bf66ad64b7aa23227d882d91249')
+
+
+def datetime_string():
+    return datetime.today().isoformat()
+
+
+def default_domain_or_website():
+    return 'domain'
+
+
+def default_interval():
+    return 'daily'
+
+
+def default_provider():
+    return 'slack'
 
 # DEFAULT_CORS_HEADERS = {
 #     "Access-Control-Allow-Headers": ','.join([

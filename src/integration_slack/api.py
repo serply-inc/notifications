@@ -55,7 +55,7 @@ class SlackClient:
                 headers={'Content-Type': 'application/json'}
             )
 
-            return json.loads(response.data.decode('utf-8'))['json']
+            return json.loads(response.data.decode('utf-8'))
 
         except Exception as e:
 
