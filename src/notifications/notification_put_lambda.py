@@ -1,4 +1,5 @@
 import boto3
+from os import getenv
 from dataclasses import asdict
 from serply_database import NotificationsDatabase, Notification
 from serply_scheduler import NotificationScheduler
@@ -20,6 +21,12 @@ def handler(event, context):
 
     notifications.put(notification)
 
-    scheduler.schedule(notification)
+    schedule = scheduler.schedule(
+        notification,
+        getenv('SCHEDULE_TARGET_ARN'),
+        getenv('SCHEDULE_ROLE_ARN'),
+    )
+
+    print(schedule.arn)
 
     return asdict(notification)

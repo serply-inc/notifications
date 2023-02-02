@@ -30,7 +30,7 @@ class NotificationScheduler:
         self._event_bus_name = f'NotificationsEventBus{STAGE.title()}'
         self._schedule_group = f'NotificationScheduleGroup{STAGE.title()}'
 
-    def schedule(self, notification: Notification, target_arn: str):
+    def schedule(self, notification: Notification, target_arn: str, role_arn: str):
 
         response = self._scheduler_client.create_schedule(
             Description=str(notification),
@@ -53,7 +53,7 @@ class NotificationScheduler:
                 'RetryPolicy': {
                     'MaximumRetryAttempts': self.retries.get(notification.interval),
                 },
-                'RoleArn': 'string',
+                'RoleArn': role_arn,
             }
         )
 

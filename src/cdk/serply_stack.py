@@ -31,34 +31,52 @@ class SerplyStack(Stack):
         NOTIFICATIONS_DIR = f'{SRC_DIR}/notifications'
         SLACK_DIR = f'{SRC_DIR}/integration_slack'
 
-        lambda_layer = _lambda.LayerVersion(self, "SerplyLambdaLayer",
+        lambda_layer = _lambda.LayerVersion(
+            self, "SerplyLambdaLayer",
             code=_lambda.Code.from_asset(LAYER_DIR),
             compatible_runtimes=[RUNTIME],
             compatible_architectures=[
-                _lambda.Architecture.X86_64, 
+                _lambda.Architecture.X86_64,
                 _lambda.Architecture.ARM_64,
             ]
         )
 
         event_bus = events.EventBus(
-            self, 'NotificationsEventBus', 
+            self, 'NotificationsEventBus',
             event_bus_name=f'NotificationsEventBus{STAGE.title()}',
         )
-        
+
         event_bus.apply_removal_policy(RemovalPolicy.DESTROY)
-        
-        # event_bus_put_policy = iam.PolicyStatement(
-        #     effect=iam.Effect.ALLOW, 
-        #     resources=['*'], 
-        #     actions=['events:PutEvents'],
+
+        # event_bus_put_policy = iam.Policy(
+        #     self, 'NotificationsEventBusPolicy',
+        #     statements=[
+        #         iam.PolicyStatement(
+        #             effect=iam.Effect.ALLOW,
+        #             resources=['*'],
+        #             actions=['events:PutEvents'],
+        #         )
+        #     ]
         # )
 
-        notification_scheduler_lambda_role = iam.Role(
-            self, "NotificationSchedulerRole",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            role_name=f'NotificationSchedulerRole{STAGE.title()}',
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEventBridgeSchedulerFullAccess"),
+        scheduler_managed_policy = iam.ManagedPolicy.from_aws_managed_policy_name(
+            "AmazonEventBridgeSchedulerFullAccess"
+        )
+
+        scheduler_role = iam.Role(
+            self, "SchedulerRole",
+            assumed_by=iam.ServicePrincipal("scheduler.amazonaws.com"),
+            inline_policies=[
+                iam.Policy(
+                    self, 'SchedulerPolicy',
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=['lambda:Invoke'],
+                            resources=['*'],
+                        )
+                    ]
+                )
             ],
         )
 
@@ -73,7 +91,7 @@ class SerplyStack(Stack):
                 'STAGE': STAGE,
             },
         )
-        
+
         event_bus.grant_put_events_to(slack_command_lambda)
         # slack_command_lambda.add_to_role_policy(event_bus_put_policy)
 
@@ -85,22 +103,6 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             # on_success=lambda_destinations.EventBridgeDestination(event_bus),
             environment={
-                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-                'STAGE': STAGE,
-            },
-        )
-
-        notification_put_lambda = _lambda.Function(
-            self, 'NotificationPutLambdaFunction',
-            runtime=RUNTIME,
-            code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
-            handler='notification_put_lambda.handler',
-            timeout=Duration.seconds(5),
-            layers=[lambda_layer],
-            role=notification_scheduler_lambda_role,
-            # on_success=lambda_destinations.EventBridgeDestination(event_bus),
-            environment={
-                'SERPLY_TIMEZONE': SERPLY_TIMEZONE,
                 'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
                 'STAGE': STAGE,
             },
@@ -120,6 +122,24 @@ class SerplyStack(Stack):
             },
         )
 
+        notification_put_lambda = _lambda.Function(
+            self, 'NotificationPutLambdaFunction',
+            runtime=RUNTIME,
+            code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
+            handler='notification_put_lambda.handler',
+            timeout=Duration.seconds(5),
+            layers=[lambda_layer],
+            environment={
+                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
+                'SCHEDULE_TARGET_ARN': notification_serp_lambda.function_arn,
+                'SCHEDULE_ROLE_ARN': scheduler_role.role_arn,
+                'SERPLY_TIMEZONE': SERPLY_TIMEZONE,
+                'STAGE': STAGE,
+            },
+        )
+
+        notification_put_lambda.role.add_managed_policy(scheduler_managed_policy)
+
         slack_command_event_rule = events.Rule(
             self, 'SlackCommandEventRule',
             event_bus=event_bus,
@@ -135,10 +155,8 @@ class SerplyStack(Stack):
                 events_targets.LambdaFunction(notification_put_lambda),
             ],
         )
-        
+
         slack_command_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
-
-
 
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
@@ -174,7 +192,7 @@ class SerplyStack(Stack):
             integration=slack_command_lambda_integration,
         )
 
-        notifications_dynamodb_table = dynamodb.Table(
+        dynamodb_table = dynamodb.Table(
             self, 'NotificationsDynamoDBTable',
             table_name=f'SerplyNotifications{STAGE.title()}',
             partition_key=dynamodb.Attribute(
@@ -188,11 +206,13 @@ class SerplyStack(Stack):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.RETAIN if STAGE == 'prod' else RemovalPolicy.DESTROY,
         )
-        
-        notifications_dynamodb_table.grant_read_write_data(notification_put_lambda)
-        notifications_dynamodb_table.grant_read_write_data(notification_serp_lambda)
 
-        schedule_group = scheduler.CfnScheduleGroup(self, "NotificationScheduleGroup",
+        dynamodb_table.grant_read_write_data(notification_put_lambda)
+        
+        dynamodb_table.grant_read_write_data(notification_serp_lambda)
+
+        schedule_group = scheduler.CfnScheduleGroup(
+            self, "NotificationScheduleGroup",
             name=f'NotificationScheduleGroup{STAGE.title()}',
         )
 
@@ -202,8 +222,6 @@ class SerplyStack(Stack):
         #         events_targets.LambdaFunction(destination),
         #     ],
         # )
-
-        # slack_command_lambda_function.role.attach_inline_policy(lazy_lambda_invocation_inline_policy)
 
         # ssm_inline_policy = iam.Policy(
         #     self, 'NotificationsSSMParametersReadPolicy',
@@ -218,4 +236,4 @@ class SerplyStack(Stack):
         # slack_command_lambda_function.role.attach_inline_policy(ssm_inline_policy)
         # serp_lambda_function.role.attach_inline_policy(ssm_inline_policy)
 
-        # notifications_dynamodb_table.grant_read_write_data(serp_lambda_function)
+        # dynamodb_table.grant_read_write_data(serp_lambda_function)

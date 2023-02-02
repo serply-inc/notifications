@@ -52,37 +52,43 @@ def handler(event, context):
     data = parse_qs(event.get('body'))
     command = SlackCommand(text=get(data, 'text'))
 
+    print(command)
+
+    event = {
+        'Source': 'serply',
+        'DetailType': command.type,
+        'Resources': [],
+        'Detail': json.dumps({
+            'provider': 'slack',
+            'text': get(data, 'text'),
+            'team_id': get(data, 'team_id'),
+            'team_domain': get(data, 'team_domain'),
+            'channel_id': get(data, 'channel_id'),
+            'channel_name': get(data, 'channel_name'),
+            'user_id': get(data, 'user_id'),
+            'user_name': get(data, 'user_name'),
+            'api_app_id': get(data, 'api_app_id'),
+            'response_url': get(data, 'response_url'),
+            'trigger_id': get(data, 'trigger_id'),
+            'stage': STAGE,
+            'command': asdict(command),
+            'headers': {
+                'X-Amzn-Trace-Id': headers.get('X-Amzn-Trace-Id'),
+                'X-Slack-Request-Timestamp': headers.get('X-Slack-Request-Timestamp'),
+                'X-Slack-Signature': headers.get('X-Slack-Signature'),
+            }
+        }),
+        'EventBusName': f'NotificationsEventBus{STAGE.title()}',
+        'TraceHeader': headers.get('X-Amzn-Trace-Id')
+    }
+    
+    print(event)
+
     # @todo validated signature or raise exception
 
-    events.put_events(Entries=[
-        {
-            'Source': 'serply',
-            'DetailType': command.type,
-            'Resources': [],
-            'Detail': json.dumps({
-                'provider': 'slack',
-                'text': get(data, 'text'),
-                'team_id': get(data, 'team_id'),
-                'team_domain': get(data, 'team_domain'),
-                'channel_id': get(data, 'channel_id'),
-                'channel_name': get(data, 'channel_name'),
-                'user_id': get(data, 'user_id'),
-                'user_name': get(data, 'user_name'),
-                'api_app_id': get(data, 'api_app_id'),
-                'response_url': get(data, 'response_url'),
-                'trigger_id': get(data, 'trigger_id'),
-                'stage': STAGE,
-                'command': asdict(command),
-                'headers': {
-                    'X-Amzn-Trace-Id': headers.get('X-Amzn-Trace-Id'),
-                    'X-Slack-Request-Timestamp': headers.get('X-Slack-Request-Timestamp'),
-                    'X-Slack-Signature': headers.get('X-Slack-Signature'),
-                }
-            }),
-            'EventBusName': f'NotificationsEventBus{STAGE.title()}',
-            'TraceHeader': headers.get('X-Amzn-Trace-Id')
-        },
-    ])
+    put_events_response = events.put_events(Entries=[event])
+    
+    print(put_events_response)
 
     return {
         'statusCode': 200,
