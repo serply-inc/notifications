@@ -1,5 +1,5 @@
 {
-  "app": "python3 app.py",
+  "app": "sh hooks.sh pre && python3 app.py && sh hooks.sh post",
   "watch": {
     "include": [
       "**"
@@ -11,7 +11,8 @@
       "source.bat",
       "**/__init__.py",
       "python/__pycache__",
-      "tests"
+      "tests",
+      "**/tests"
     ]
   },
   "context": {

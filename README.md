@@ -48,7 +48,7 @@ python3 install.py secrets
 ### Creating a SERP Scheduled Notification
 
 ```yaml
-/slerpy serp google.com "google+search" daily
+/serply serp google.com "google+search" daily
 ```
 
 ---
@@ -74,7 +74,7 @@ After the init process completes and the virtualenv is created, you can use the 
 step to activate your virtualenv.
 
 ```
-$ source .venv/bin/activate
+source .venv/bin/activate
 ```
 
 If you are a Windows platform, you would activate the virtualenv like this:
@@ -108,3 +108,6 @@ command.
  * `cdk docs`        open CDK documentation
 
 Enjoy!
+
+
+cdk synth --no-staging > template.yaml --profile cloudchemy

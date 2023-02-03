@@ -1,7 +1,7 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from serply_notifications.serply_notifications_stack import SerplyNotificationsStack
+from cdk.serply_notifications_stack import SerplyNotificationsStack
 
 # example tests. To run these tests, uncomment this file along with the example
 # resource in serply_notifications/serply_notifications_stack.py

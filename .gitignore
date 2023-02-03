@@ -9,16 +9,17 @@ __pycache__
 .cdk.staging
 cdk.out
 
-NOTES.md
-template.yaml
+src/layer/python/lib/python3.9/*
+!src/layer/python/lib/python3.9/requirements.txt
+
+src/**/serply_events.py
+
 .env
+.env.*
+!.env.example
 
-src/bin
-src/dotenv
-src/python_dotenv*
-src/slack*
-
-serply_notifications/metadata.txt
 slack_manifest.*.yaml
 !slack_manifest.template.yaml
-serply.outputs.json
+
+notes
+template.yaml
