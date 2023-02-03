@@ -49,7 +49,7 @@ class NotificationScheduler:
                     'DetailType': f'{notification.type}::schedule',
                     'Source': 'serply'
                 },
-                'Input': json.dumps(asdict(notification)).encode('utf-8'),
+                'Input': json.dumps(asdict(notification)),
                 'RetryPolicy': {
                     'MaximumRetryAttempts': self.retries.get(notification.interval),
                 },
