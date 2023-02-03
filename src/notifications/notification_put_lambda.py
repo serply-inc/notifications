@@ -1,4 +1,5 @@
 import boto3
+import json
 from os import getenv
 from dataclasses import asdict
 from serply_database import NotificationsDatabase, Notification
@@ -9,6 +10,8 @@ scheduler = NotificationScheduler(boto3.client('scheduler'))
 
 
 def handler(event, context):
+
+    print(json.dumps(event))
 
     command = event.get('detail').get('command')
 

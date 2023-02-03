@@ -9,17 +9,17 @@ notifications = NotificationsDatabase(boto3.resource('dynamodb'))
 serply = SerplyClient(getenv('SERPLY_API_KEY'))
 
 
-def handler(event, context):
+def handler(schedule_event, context):
 
-    print(json.dumps(event))
+    print(json.dumps(schedule_event))
 
-    NOTIFICATION_PK = 'notification_98a64bf66ad64b7aa23227d882d91249'
-    NOTIFICATION_SK = 'domain_google.com#query_google+search+api'
-    domain = 'hashnode.com'
-    website = 'https://hashnode.com'
-    domain_or_website = 'domain'
-    query = 'developer+blog'
-    interval = 'test'
+    NOTIFICATION_PK = schedule_event.get('NOTIFICATION_PK')
+    NOTIFICATION_SK = schedule_event.get('NOTIFICATION_SK')
+    domain = schedule_event.get('domain')
+    website = schedule_event.get('website')
+    domain_or_website = schedule_event.get('domain_or_website')
+    query = schedule_event.get('query')
+    interval = schedule_event.get('interval')
 
     if interval == 'test':
         response = serply.serp(domain=domain, website=website, query=query)
