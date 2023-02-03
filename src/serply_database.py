@@ -2,6 +2,7 @@ from dataclasses import asdict, dataclass, field
 from serply_config import (
     datetime_string,
     default_account,
+    default_notification_type,
     default_domain_or_website,
     default_interval,
     default_provider,
@@ -13,11 +14,11 @@ from serply_config import (
 class Notification:
     SK: str = field(init=False)
     PK: str = field(init=False)
-    TOKEN: str = field(init=False)
-    NOTIFICATION_PK: str
-    NOTIFICATION_SK: str
+    NOTIFICATION_PK: str = field(init=False)
+    NOTIFICATION_SK: str = field(init=False)
+    schedule_name: str = field(init=False)
     query: str
-    schedule_name: str
+    type: str = field(default_factory=default_notification_type)
     account: str = field(default_factory=default_account)
     created_at: str = field(default_factory=datetime_string)
     domain_or_website: str = field(default_factory=default_domain_or_website)
@@ -34,9 +35,9 @@ class Notification:
             f'domain_{self.domain}' if self.domain else f'website_{self.website}',
             f'query_{self.query}',
         ])
+        self.schedule_name = f'{self.PK}#{self.SK}'
         self.NOTIFICATION_PK = self.PK
         self.NOTIFICATION_SK = self.SK
-        self.schedule_name = f'{self.PK}#{self.SK}'
 
 
 @dataclass
@@ -54,6 +55,7 @@ class Serp:
     serp_description: str
     domain_or_website: str
     query: str
+    type: str = 'serp'
     account: str = field(default_factory=default_account)
     created_at: str = field(default_factory=datetime_string)
     interval: str = field(default_factory=default_interval)

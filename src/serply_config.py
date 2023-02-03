@@ -24,6 +24,8 @@ def default_account():
 def datetime_string():
     return datetime.today().isoformat()
 
+def default_notification_type():
+    return 'serp'
 
 def default_domain_or_website():
     return 'domain'

@@ -81,14 +81,9 @@ def handler(event, context):
         'EventBusName': f'NotificationsEventBus{STAGE.title()}',
         'TraceHeader': headers.get('X-Amzn-Trace-Id')
     }
-    
-    print(event)
 
     # @todo validated signature or raise exception
-
-    put_events_response = events.put_events(Entries=[event])
-    
-    print(put_events_response)
+    events.put_events(Entries=[event])
 
     return {
         'statusCode': 200,

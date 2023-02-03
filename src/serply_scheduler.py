@@ -46,7 +46,7 @@ class NotificationScheduler:
             Target={
                 'Arn': target_arn,
                 'EventBridgeParameters': {
-                    'DetailType': f'{notification.type}.schedule',
+                    'DetailType': f'{notification.type}::schedule',
                     'Source': 'serply'
                 },
                 'Input': json.dumps(asdict(notification)).encode('utf-8'),

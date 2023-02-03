@@ -66,18 +66,14 @@ class SerplyStack(Stack):
         scheduler_role = iam.Role(
             self, "SchedulerRole",
             assumed_by=iam.ServicePrincipal("scheduler.amazonaws.com"),
-            inline_policies=[
-                iam.Policy(
-                    self, 'SchedulerPolicy',
-                    statements=[
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=['lambda:Invoke'],
-                            resources=['*'],
-                        )
-                    ]
-                )
-            ],
+        )
+        
+        scheduler_role.add_to_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=['lambda:Invoke'],
+                resources=['*'],
+            )
         )
 
         slack_command_lambda = _lambda.Function(

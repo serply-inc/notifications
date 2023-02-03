@@ -13,6 +13,7 @@ def handler(event, context):
     command = event.get('detail').get('command')
 
     notification = Notification(
+        type=command.get('detail-type'),
         domain=command.get('domain'),
         interval=command.get('interval'),
         website=command.get('website'),
