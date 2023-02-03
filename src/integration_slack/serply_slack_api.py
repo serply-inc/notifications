@@ -1,7 +1,7 @@
 import json
 import re
 import urllib3
-from dataclasses import asdict, dataclass, field, is_dataclass
+from dataclasses import asdict, dataclass, field
 
 http = urllib3.PoolManager()
 

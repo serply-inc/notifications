@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
 from cdk.serply_stack import SerplyStack
-from serply_config import DEFAULT_ACCOUNT, SERPLY_API_KEY, SERPLY_TIMEZONE, SRC_DIR, STAGE
+from serply_config import SERPLY_CONFIG
 
 app = cdk.App()
 
@@ -22,15 +22,9 @@ app = cdk.App()
 # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
 
 SerplyStack(
-    app, f'SerplyStack{STAGE.title()}',
+    app, f'SerplyStack{SERPLY_CONFIG.STAGE.title()}',
     env=None,
-    config={
-        'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-        'SERPLY_API_KEY': SERPLY_API_KEY,
-        'SERPLY_TIMEZONE': SERPLY_TIMEZONE,
-        'SRC_DIR': SRC_DIR,
-        'STAGE': STAGE,
-    },
+    config=SERPLY_CONFIG,
 )
 
 app.synth()

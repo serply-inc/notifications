@@ -33,7 +33,16 @@ class SerplyClient:
         domain: str = None,
         website: str = None,
         num: int = 100,
+        mock: bool = False,
     ):
+        if mock:
+            return self.serpMock(
+                query=query,
+                domain=domain,
+                website=website,
+                num=num,
+            )
+        
         if domain is None and website is None:
             raise Exception('SerplyClient.serp: domain or website required.')
 

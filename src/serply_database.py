@@ -7,7 +7,7 @@ from serply_config import (
     default_domain_or_website,
     default_interval,
     default_provider,
-    STAGE,
+    SERPLY_CONFIG,
 )
 
 
@@ -83,11 +83,10 @@ class NotificationsDatabase:
 
     def __init__(self, dynamodb_resource: object) -> None:
         self._table = dynamodb_resource.Table(
-            f'SerplyNotifications{STAGE.title()}'
+            SERPLY_CONFIG.NOTIFICATION_TABLE_NAME
         )
 
     def put(self, data):
-
-        Item = {k: v for k, v in asdict(data).items() if v is not None}
-
-        return self._table.put_item(Item=Item)
+        # Filter values that are None
+        item = {k: v for k, v in asdict(data).items() if v is not None}
+        return self._table.put_item(Item=item)

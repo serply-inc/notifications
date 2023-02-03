@@ -1,7 +1,5 @@
 import boto3
 import json
-from os import getenv
-from dataclasses import asdict
 from serply_database import NotificationsDatabase, Notification
 from serply_scheduler import NotificationScheduler
 
@@ -13,24 +11,23 @@ def handler(event, context):
 
     print(json.dumps(event))
 
-    command = event.get('detail').get('command')
+    input = event.get('detail').get('input')
+    headers = event.get('detail').get('headers')
 
     notification = Notification(
-        type=command.get('detail-type'),
-        domain=command.get('domain'),
-        interval=command.get('interval'),
-        website=command.get('website'),
-        query=command.get('query'),
+        type=input.get('detail-type'),
+        domain=input.get('domain'),
+        interval=input.get('interval'),
+        website=input.get('website'),
+        query=input.get('query'),
     )
 
     notifications.put(notification)
 
-    schedule = scheduler.schedule(
-        notification,
-        getenv('SCHEDULE_TARGET_ARN'),
-        getenv('SCHEDULE_ROLE_ARN'),
+    scheduler.schedule(
+        notification=notification,
+        input=input,
+        headers=headers,
     )
 
-    print(schedule.arn)
-
-    return asdict(notification)
+    return {'ok': True}

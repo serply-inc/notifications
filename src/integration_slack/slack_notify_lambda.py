@@ -1,33 +1,30 @@
 import json
-# from api import SlackClient
-# from messages import SerpNotificationMessage
-# from os import getenv
+from messages import SerpNotificationMessage
+from serply_config import SERPLY_CONFIG
+from serply_slack_api import SlackClient
 
-# slack = SlackClient(getenv('SLACK_BOT_TOKEN'))
+slack = SlackClient(SERPLY_CONFIG.SLACK_BOT_TOKEN)
 
 
 def handler(event, context):
-    
+
     print(json.dumps(event))
 
-    # detail = event.get('detail')
-    # response_url = detail.get('response_url')
-    # command = detail.get('command')
+    input = event.get('detail').get('input')
+    notification = event.get('detail').get('notification')
 
-    # # @todo respond with "Please enter a valid command" when invalid
+    message = SerpNotificationMessage(
+        channel_id=input.get('channel_id'),
+        user_id=input.get('user_id'),
+        domain=notification.get('domain'),
+        domain_or_website=notification.get('domain_or_website'),
+        interval=notification.get('interval'),
+        query=notification.get('query'),
+        type=notification.get('type'),
+        type_name=notification.get('type_name'),
+        website=notification.get('website'),
+    )
 
-    # message = SerpNotificationMessage(
-    #     channel_id=detail.get('channel_id'),
-    #     domain=command.get('domain'),
-    #     domain_or_website=command.get('domain_or_website'),
-    #     interval=command.get('interval'),
-    #     query=command.get('query'),
-    #     type=command.get('type'),
-    #     type_name=command.get('type_name'),
-    #     user_id=detail.get('user_id'),
-    #     website=command.get('website'),
-    # )
-
-    # return slack.notify(response_url, message)
+    slack.notify(message)
 
     return {'ok': True}

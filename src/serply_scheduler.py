@@ -1,6 +1,6 @@
 import json
 from dataclasses import asdict, dataclass
-from serply_config import STAGE, SERPLY_TIMEZONE
+from serply_config import SERPLY_CONFIG
 from serply_database import Notification
 
 
@@ -27,35 +27,32 @@ class NotificationScheduler:
 
     def __init__(self, scheduler_client: object) -> None:
         self._scheduler_client = scheduler_client
-        self._event_bus_name = f'NotificationsEventBus{STAGE.title()}'
-        self._schedule_group = f'NotificationScheduleGroup{STAGE.title()}'
+        self._event_bus_name = SERPLY_CONFIG.EVENT_BUS_NAME
+        self._schedule_group_name = SERPLY_CONFIG.SCHEDULE_GROUP_NAME
 
-    def schedule(self, notification: Notification, target_arn: str, role_arn: str):
-
-        flexible_time_window = {
-            'MaximumWindowInMinutes': 10,
-            'Mode': 'FLEXIBLE',
-        }
-
-        if notification.interval == 'test':
-            flexible_time_window = {
-                'Mode': 'OFF',
-            }
+    def schedule(self, notification: Notification, input: dict = {}, headers: dict = {}):
 
         response = self._scheduler_client.create_schedule(
-            FlexibleTimeWindow=flexible_time_window,
-            GroupName=self._schedule_group,
+            FlexibleTimeWindow={
+                'MaximumWindowInMinutes': 10,
+                'Mode': 'OFF' if notification.interval == 'test' else 'FLEXIBLE',
+            },
+            GroupName=self._schedule_group_name,
             Name=notification.SCHEDULE_HASH,
             ScheduleExpression=self.intervals.get(notification.interval),
-            ScheduleExpressionTimezone=SERPLY_TIMEZONE,
+            ScheduleExpressionTimezone=SERPLY_CONFIG.SERPLY_TIMEZONE,
             State='ENABLED',
             Target={
-                'Arn': target_arn,
-                'Input': json.dumps(asdict(notification)),
+                'Arn': SERPLY_CONFIG.SCHEDULE_TARGET_ARN,
+                'RoleArn': SERPLY_CONFIG.SCHEDULE_ROLE_ARN,
+                'Input': json.dumps({
+                    'notification': asdict(notification),
+                    'input': input,
+                    'headers': headers,
+                }),
                 'RetryPolicy': {
                     'MaximumRetryAttempts': self.max_retry_attempts.get(notification.interval),
                 },
-                'RoleArn': role_arn,
             }
         )
 

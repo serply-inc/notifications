@@ -14,26 +14,19 @@ from aws_cdk import (
     Stack,
 )
 from constructs import Construct
+from serply_config import SerplyConfig
 
 
 class SerplyStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: SerplyConfig, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         RUNTIME = _lambda.Runtime.PYTHON_3_9
-        DEFAULT_ACCOUNT = config['DEFAULT_ACCOUNT']
-        SERPLY_API_KEY = config['SERPLY_API_KEY']
-        SERPLY_TIMEZONE = config['SERPLY_TIMEZONE']
-        STAGE = config['STAGE']
-        SRC_DIR = config['SRC_DIR']
-        LAYER_DIR = f'{SRC_DIR}/layer'
-        NOTIFICATIONS_DIR = f'{SRC_DIR}/notifications'
-        SLACK_DIR = f'{SRC_DIR}/integration_slack'
 
         lambda_layer = _lambda.LayerVersion(
-            self, "SerplyLambdaLayer",
-            code=_lambda.Code.from_asset(LAYER_DIR),
+            self, 'SerplyLambdaLayer',
+            code=_lambda.Code.from_asset(config.LAYER_DIR),
             compatible_runtimes=[RUNTIME],
             compatible_architectures=[
                 _lambda.Architecture.X86_64,
@@ -42,8 +35,8 @@ class SerplyStack(Stack):
         )
 
         event_bus = events.EventBus(
-            self, 'NotificationsEventBus',
-            event_bus_name=f'NotificationsEventBus{STAGE.title()}',
+            self, config.EVENT_BUS_NAME,
+            event_bus_name=config.EVENT_BUS_NAME,
         )
 
         event_bus.apply_removal_policy(RemovalPolicy.DESTROY)
@@ -60,12 +53,12 @@ class SerplyStack(Stack):
         # )
 
         scheduler_managed_policy = iam.ManagedPolicy.from_aws_managed_policy_name(
-            "AmazonEventBridgeSchedulerFullAccess"
+            'AmazonEventBridgeSchedulerFullAccess'
         )
 
         scheduler_role = iam.Role(
-            self, "SchedulerRole",
-            assumed_by=iam.ServicePrincipal("scheduler.amazonaws.com"),
+            self, 'SchedulerRole',
+            assumed_by=iam.ServicePrincipal('scheduler.amazonaws.com'),
         )
         
         scheduler_role.add_to_policy(
@@ -79,58 +72,71 @@ class SerplyStack(Stack):
         slack_command_lambda = _lambda.Function(
             self, 'SlackCommandLambdaFunction',
             runtime=RUNTIME,
-            code=_lambda.Code.from_asset(SLACK_DIR),
+            code=_lambda.Code.from_asset(config.SLACK_DIR),
             handler='slack_command_lambda.handler',
             timeout=Duration.seconds(5),
             environment={
-                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-                'STAGE': STAGE,
+                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'STAGE': config.STAGE,
             },
         )
 
         event_bus.grant_put_events_to(slack_command_lambda)
-        # slack_command_lambda.add_to_role_policy(event_bus_put_policy)
 
         slack_respond_lambda = _lambda.Function(
             self, 'SlackRespondLambdaFunction',
             runtime=RUNTIME,
-            code=_lambda.Code.from_asset(SLACK_DIR),
+            code=_lambda.Code.from_asset(config.SLACK_DIR),
             handler='slack_respond_lambda.handler',
             timeout=Duration.seconds(5),
-            # on_success=lambda_destinations.EventBridgeDestination(event_bus),
             environment={
-                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-                'STAGE': STAGE,
+                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'STAGE': config.STAGE,
+            },
+        )
+
+        slack_notify_lambda = _lambda.Function(
+            self, 'SlackNotifyLambdaFunction',
+            runtime=RUNTIME,
+            code=_lambda.Code.from_asset(config.SLACK_DIR),
+            handler='slack_notify_lambda.handler',
+            timeout=Duration.seconds(5),
+            environment={
+                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
+                'STAGE': config.STAGE,
             },
         )
 
         notification_serp_lambda = _lambda.Function(
             self, 'NotificationSerpLambdaFunction',
             runtime=RUNTIME,
-            code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
+            code=_lambda.Code.from_asset(config.NOTIFICATIONS_DIR),
             handler='notification_serp_lambda.handler',
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'SERPLY_API_KEY': SERPLY_API_KEY,
-                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
-                'STAGE': STAGE,
+                'SERPLY_API_KEY': config.SERPLY_API_KEY,
+                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'STAGE': config.STAGE,
             },
         )
+        
+        event_bus.grant_put_events_to(notification_serp_lambda)
 
         notification_put_lambda = _lambda.Function(
             self, 'NotificationPutLambdaFunction',
             runtime=RUNTIME,
-            code=_lambda.Code.from_asset(NOTIFICATIONS_DIR),
+            code=_lambda.Code.from_asset(config.NOTIFICATIONS_DIR),
             handler='notification_put_lambda.handler',
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'DEFAULT_ACCOUNT': DEFAULT_ACCOUNT,
+                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'SCHEDULE_TARGET_ARN': notification_serp_lambda.function_arn,
                 'SCHEDULE_ROLE_ARN': scheduler_role.role_arn,
-                'SERPLY_TIMEZONE': SERPLY_TIMEZONE,
-                'STAGE': STAGE,
+                'SERPLY_TIMEZONE': config.SERPLY_TIMEZONE,
+                'STAGE': config.STAGE,
             },
         )
 
@@ -143,7 +149,7 @@ class SerplyStack(Stack):
                 source=["serply"],
                 detail_type=[
                     'serp',
-                    # 'search', # additional commands can be added
+                    # 'search', # additional commands can be added in the future
                 ],
             ),
             targets=[
@@ -154,6 +160,20 @@ class SerplyStack(Stack):
 
         slack_command_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
+        slack_notify_event_rule = events.Rule(
+            self, 'SlackNotifyEventRule',
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=["serply"],
+                detail_type=['notify'],
+            ),
+            targets=[
+                events_targets.LambdaFunction(slack_notify_lambda),
+            ],
+        )
+
+        slack_notify_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
+
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
             allow_methods=apigateway.Cors.ALL_METHODS,
@@ -163,10 +183,10 @@ class SerplyStack(Stack):
         rest_api = apigateway.RestApi(
             self, 'NotificationsRestApi',
             default_cors_preflight_options=cors_options,
-            endpoint_export_name=f'NotificationsRestApiUrl{STAGE.title()}',
+            endpoint_export_name=f'NotificationsRestApiUrl{config.STAGE_SUFFIX}',
             cloud_watch_role=True,
             deploy_options=apigateway.StageOptions(
-                stage_name=STAGE,
+                stage_name=config.STAGE,
                 data_trace_enabled=True,
                 logging_level=apigateway.MethodLoggingLevel.INFO,
             ),
@@ -189,8 +209,8 @@ class SerplyStack(Stack):
         )
 
         dynamodb_table = dynamodb.Table(
-            self, 'NotificationsDynamoDBTable',
-            table_name=f'SerplyNotifications{STAGE.title()}',
+            self, config.NOTIFICATION_TABLE_NAME,
+            table_name=config.NOTIFICATION_TABLE_NAME,
             partition_key=dynamodb.Attribute(
                 name='PK',
                 type=dynamodb.AttributeType.STRING,
@@ -200,24 +220,17 @@ class SerplyStack(Stack):
                 type=dynamodb.AttributeType.STRING,
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.RETAIN if STAGE == 'prod' else RemovalPolicy.DESTROY,
+            removal_policy=RemovalPolicy.RETAIN if config.STAGE == 'prod' else RemovalPolicy.DESTROY,
         )
 
         dynamodb_table.grant_read_write_data(notification_put_lambda)
-        
+
         dynamodb_table.grant_read_write_data(notification_serp_lambda)
 
         schedule_group = scheduler.CfnScheduleGroup(
-            self, "NotificationScheduleGroup",
-            name=f'NotificationScheduleGroup{STAGE.title()}',
+            self, config.SCHEDULE_GROUP_NAME,
+            name=config.SCHEDULE_GROUP_NAME,
         )
-
-        # rule = events.Rule(self, "Rule",
-        #     schedule=events.Schedule.rate(cdk.Duration.minutes(1)),
-        #     targets=[
-        #         events_targets.LambdaFunction(destination),
-        #     ],
-        # )
 
         # ssm_inline_policy = iam.Policy(
         #     self, 'NotificationsSSMParametersReadPolicy',
@@ -231,5 +244,3 @@ class SerplyStack(Stack):
 
         # slack_command_lambda_function.role.attach_inline_policy(ssm_inline_policy)
         # serp_lambda_function.role.attach_inline_policy(ssm_inline_policy)
-
-        # dynamodb_table.grant_read_write_data(serp_lambda_function)

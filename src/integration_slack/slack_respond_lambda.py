@@ -1,27 +1,29 @@
-from api import SlackClient
 from messages import NotificationScheduledMessage
+from serply_slack_api import SlackClient
 
 slack = SlackClient()
 
 
 def handler(event, context):
 
-    detail = event.get('detail')
-    response_url = detail.get('response_url')
-    command = detail.get('command')
-
-    # @todo respond with "Please enter a valid command" when invalid
+    input = event.get('detail').get('input')
+    notification = event.get('detail').get('notification')
 
     message = NotificationScheduledMessage(
-        channel_id=detail.get('channel_id'),
-        domain=command.get('domain'),
-        domain_or_website=command.get('domain_or_website'),
-        interval=command.get('interval'),
-        query=command.get('query'),
-        type=command.get('type'),
-        type_name=command.get('type_name'),
-        user_id=detail.get('user_id'),
-        website=command.get('website'),
+        channel_id=input.get('channel_id'),
+        user_id=input.get('user_id'),
+        interval=notification.get('interval'),
+        type=notification.get('type'),
+        type_name=notification.get('type_name'),
+        domain=notification.get('domain'),
+        domain_or_website=notification.get('domain_or_website'),
+        query=notification.get('query'),
+        website=notification.get('website'),
+    )
+    
+    slack.respond(
+        response_url=input.get('response_url'), 
+        message=message,
     )
 
-    return slack.respond(response_url, message)
+    return {'ok': True}
