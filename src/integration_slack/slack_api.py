@@ -2,6 +2,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from urllib3 import PoolManager
+from serply_config import SERPLY_CONFIG
 
 
 http = PoolManager()
@@ -43,18 +44,52 @@ class SlackCommand:
 
 class SlackClient:
 
+    _api_url: str = 'https://slack.com/api/'
+
     def __init__(self, bot_key: str = None) -> None:
         self._bot_key = bot_key
 
-    def notify(self, message: dict):
-        print('notify')
-        print(message)
+    def notify(self, message: object):
+        
+        url = self._api_url + 'chat.postMessage'
+        
+        try:
 
-    def respond(self, response_url: str, message: dict):
+            payload = {
+                'channel': message.channel,
+                'blocks': message.blocks,
+            }
+
+            request = json.dumps(payload).encode('utf-8')
+
+            response = http.request(
+                'POST',
+                url,
+                body=request,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {SERPLY_CONFIG.SLACK_BOT_TOKEN}',
+                }
+            )
+
+            return json.loads(response.data.decode('utf-8'))
+
+        except Exception as e:
+
+            print(str(e))
+
+            return {}
+
+    def respond(self, response_url: str, message: object):
 
         try:
 
-            request = json.dumps(asdict(message)).encode('utf-8')
+            payload = {
+                'blocks': message.blocks,
+                'response_type': message.response_type,
+            }
+
+            request = json.dumps(payload).encode('utf-8')
 
             response = http.request(
                 'POST',

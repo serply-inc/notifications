@@ -15,7 +15,7 @@ def handler(event, context):
     detail_input = event.get('detail').get('input')
 
     message = NotificationScheduledMessage(
-        channel_id=detail_input.get('channel_id'),
+        channel=detail_input.get('channel_id'),
         user_id=detail_input.get('user_id'),
         interval=detail_notification.get('interval'),
         type=detail_notification.get('type'),

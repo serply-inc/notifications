@@ -99,6 +99,7 @@ class SerplyStack(Stack):
             code=_lambda.Code.from_asset(config.SLACK_DIR),
             handler='slack_notify_lambda.handler',
             timeout=Duration.seconds(5),
+            layers=[lambda_layer],
             environment={
                 'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
@@ -163,7 +164,7 @@ class SerplyStack(Stack):
             event_bus=event_bus,
             event_pattern=events.EventPattern(
                 source=["serply"],
-                detail_type=['notify'],
+                detail_type=['serp.notify'],
             ),
             targets=[
                 events_targets.LambdaFunction(slack_notify_lambda),

@@ -55,6 +55,7 @@ def handler(event, context):
     notifications.put(serp_notification)
 
     notification_event_bus.put(
+        detail_type=f'{notification.type}.notify',
         notification=serp_notification,
         input=detail_input,
         headers=detail_headers,

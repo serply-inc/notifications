@@ -65,6 +65,7 @@ def handler(event, context):
     # @todo validated signature or raise exception
     
     notification_event_bus.put(
+        detail_type=notification.type,
         notification=notification,
         input=input,
         headers=headers,

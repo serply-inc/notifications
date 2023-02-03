@@ -8,11 +8,13 @@ class NotificationEventBus:
     def __init__(self, events_client: object) -> None:
         self._events_client = events_client
 
-    def put(self, notification: object, input: dict, headers: dict):
+    def put(self, detail_type: str, notification: object, input: dict, headers: dict):
+
+        print(f'detail_type: {detail_type}')
 
         event = {
             'Source': 'serply',
-            'DetailType': notification.type,
+            'DetailType': detail_type,
             'Detail': json.dumps({
                 'notification': asdict(notification),
                 'input': input,

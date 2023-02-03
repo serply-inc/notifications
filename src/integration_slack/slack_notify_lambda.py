@@ -16,7 +16,7 @@ def handler(event, context):
     detail_input = event.get('detail').get('input')
 
     message = SerpNotificationMessage(
-        channel_id=detail_input.get('channel_id'),
+        channel=detail_input.get('channel_id'),
         user_id=detail_input.get('user_id'),
         domain=detail_notification.get('domain'),
         domain_or_website=detail_notification.get('domain_or_website'),
@@ -25,8 +25,17 @@ def handler(event, context):
         type=detail_notification.get('type'),
         type_name=detail_notification.get('type_name'),
         website=detail_notification.get('website'),
+        serp_position=detail_notification.get('serp_position'),
+        serp_searched_results=detail_notification.get('serp_searched_results'),
+        serp_domain=detail_notification.get('serp_domain'),
+        serp_query=detail_notification.get('serp_query'),
+        serp_title=detail_notification.get('serp_title'),
+        serp_link=detail_notification.get('serp_link'),
+        serp_description=detail_notification.get('serp_description'),
     )
 
-    slack.notify(message)
+    slack_response = slack.notify(message)
+    
+    print(json.dumps(slack_response))
 
     return {'ok': True}
