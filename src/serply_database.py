@@ -1,3 +1,4 @@
+from hashlib import sha256
 from dataclasses import asdict, dataclass, field
 from serply_config import (
     datetime_string,
@@ -10,13 +11,17 @@ from serply_config import (
 )
 
 
+def schedule_hash(obj: str):
+    return 'schedule_' + sha256(bytes(f'{obj.NOTIFICATION_PK}#{obj.NOTIFICATION_SK}', 'utf-8')).hexdigest()
+
+
 @dataclass
 class Notification:
     SK: str = field(init=False)
     PK: str = field(init=False)
+    SCHEDULE_HASH: str = field(init=False)
     NOTIFICATION_PK: str = field(init=False)
     NOTIFICATION_SK: str = field(init=False)
-    schedule_name: str = field(init=False)
     query: str
     type: str = field(default_factory=default_notification_type)
     account: str = field(default_factory=default_account)
@@ -35,15 +40,16 @@ class Notification:
             f'domain_{self.domain}' if self.domain else f'website_{self.website}',
             f'query_{self.query}',
         ])
-        self.schedule_name = f'{self.PK}#{self.SK}'
         self.NOTIFICATION_PK = self.PK
         self.NOTIFICATION_SK = self.SK
+        self.SCHEDULE_HASH = schedule_hash(self)
 
 
 @dataclass
 class Serp:
     SK: str = field(init=False)
     PK: str = field(init=False)
+    SCHEDULE_HASH: str = field(init=False)
     NOTIFICATION_PK: str
     NOTIFICATION_SK: str
     serp_position: int
@@ -70,6 +76,7 @@ class Serp:
             self.NOTIFICATION_SK,
         ])
         self.SK = f'serp_{self.created_at}'
+        self.SCHEDULE_HASH = schedule_hash(self)
 
 
 class NotificationsDatabase:

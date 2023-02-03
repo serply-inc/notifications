@@ -39,7 +39,7 @@ class NotificationScheduler:
                 'Mode': 'FLEXIBLE',
             },
             GroupName=self._schedule_group,
-            Name=notification.schedule_name,
+            Name=notification.SCHEDULE_HASH,
             ScheduleExpression=self.intervals.get(notification.interval),
             ScheduleExpressionTimezone=SERPLY_TIMEZONE,
             State='ENABLED',
