@@ -1,4 +1,4 @@
-from hashlib import sha256
+from hashlib import blake2b
 from dataclasses import asdict, dataclass, field
 from serply_config import (
     datetime_string,
@@ -12,7 +12,7 @@ from serply_config import (
 
 
 def schedule_hash(obj: str):
-    return 'schedule_' + sha256(bytes(f'{obj.NOTIFICATION_PK}#{obj.NOTIFICATION_SK}', 'utf-8')).hexdigest()
+    return blake2b(bytes(f'{obj.NOTIFICATION_PK}#{obj.NOTIFICATION_SK}', 'utf-8'), digest_size=64).hexdigest()
 
 
 @dataclass
