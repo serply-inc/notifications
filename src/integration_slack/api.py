@@ -42,15 +42,22 @@ class SlackCommand:
 
 class SlackClient:
 
-    def post(self, url: str, data: dict):
+    def __init__(self, bot_key: str = None) -> None:
+        self._bot_key = bot_key
+
+    def notify(self, message: dict):
+        
+        pass
+
+    def respond(self, respond_url: str, message: dict):
 
         try:
 
-            request = json.dumps(asdict(data)).encode('utf-8')
+            request = json.dumps(asdict(message)).encode('utf-8')
 
             response = http.request(
                 'POST',
-                url,
+                respond_url,
                 body=request,
                 headers={'Content-Type': 'application/json'}
             )

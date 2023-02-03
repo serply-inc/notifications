@@ -24,4 +24,4 @@ def handler(event, context):
         website=command.get('website'),
     )
 
-    return slack.post(response_url, message)
+    return slack.respond(response_url, message)
