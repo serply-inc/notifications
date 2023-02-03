@@ -12,7 +12,7 @@ from serply_config import (
 
 
 def schedule_hash(obj: str):
-    return blake2b(bytes(f'{obj.NOTIFICATION_PK}#{obj.NOTIFICATION_SK}', 'utf-8'), digest_size=64).hexdigest()
+    return blake2b(bytes(f'{obj.NOTIFICATION_PK}#{obj.NOTIFICATION_SK}', 'utf-8'), digest_size=32).hexdigest()
 
 
 @dataclass

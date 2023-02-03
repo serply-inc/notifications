@@ -1,10 +1,11 @@
 import json
-import urllib3
+from random import randint
 from dataclasses import dataclass
 from urllib.parse import urlencode
+from urllib3 import PoolManager
 
 
-http = urllib3.PoolManager()
+http = PoolManager()
 
 
 @dataclass
@@ -60,6 +61,22 @@ class SerplyClient:
             title=response.get('result').get('title'),
             description=response.get('result').get('description'),
             link=response.get('result').get('link'),
+        )
+
+    def serpMock(
+        self,
+        query: str,
+        domain: str = None,
+        website: str = None,
+    ):
+        return SerpResponse(
+            searched_results=randint(75, 100),
+            position=randint(15, 50),
+            domain=domain if domain else website,
+            query=query,
+            title='Test title for SERP mock response',
+            description='Test description for SERP mock response',
+            link='https://example.com/',
         )
 
     def get(self, path: str, data: dict):

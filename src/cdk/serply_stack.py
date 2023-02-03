@@ -71,7 +71,7 @@ class SerplyStack(Stack):
         scheduler_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=['lambda:Invoke'],
+                actions=['lambda:InvokeFunction'],
                 resources=['*'],
             )
         )

@@ -12,13 +12,13 @@ class ScheduleResponse:
 class NotificationScheduler:
 
     intervals = {
-        'test': 'rate(10 minutes)',
+        'test': 'rate(1 minute)',
         'daily': 'rate(1 day)',
         'weekly': 'rate(1 week)',
         'monthly': 'rate(1 month)',
     }
 
-    retries = {
+    max_retry_attempts = {
         'test': 0,
         'daily': 1,
         'weekly': 2,
@@ -32,12 +32,18 @@ class NotificationScheduler:
 
     def schedule(self, notification: Notification, target_arn: str, role_arn: str):
 
+        flexible_time_window = {
+            'MaximumWindowInMinutes': 10,
+            'Mode': 'FLEXIBLE',
+        }
+
+        if notification.interval == 'test':
+            flexible_time_window = {
+                'Mode': 'OFF',
+            }
+
         response = self._scheduler_client.create_schedule(
-            Description=str(notification),
-            FlexibleTimeWindow={
-                'MaximumWindowInMinutes': 15,
-                'Mode': 'FLEXIBLE',
-            },
+            FlexibleTimeWindow=flexible_time_window,
             GroupName=self._schedule_group,
             Name=notification.SCHEDULE_HASH,
             ScheduleExpression=self.intervals.get(notification.interval),
@@ -45,13 +51,9 @@ class NotificationScheduler:
             State='ENABLED',
             Target={
                 'Arn': target_arn,
-                'EventBridgeParameters': {
-                    'DetailType': f'{notification.type}::schedule',
-                    'Source': 'serply'
-                },
                 'Input': json.dumps(asdict(notification)),
                 'RetryPolicy': {
-                    'MaximumRetryAttempts': self.retries.get(notification.interval),
+                    'MaximumRetryAttempts': self.max_retry_attempts.get(notification.interval),
                 },
                 'RoleArn': role_arn,
             }

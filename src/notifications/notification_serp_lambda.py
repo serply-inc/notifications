@@ -1,3 +1,4 @@
+import json
 import boto3
 from dataclasses import asdict
 from os import getenv
@@ -10,14 +11,20 @@ serply = SerplyClient(getenv('SERPLY_API_KEY'))
 
 def handler(event, context):
 
+    print(json.dumps(event))
+
     NOTIFICATION_PK = 'notification_98a64bf66ad64b7aa23227d882d91249'
     NOTIFICATION_SK = 'domain_google.com#query_google+search+api'
     domain = 'hashnode.com'
+    website = 'https://hashnode.com'
     domain_or_website = 'domain'
     query = 'developer+blog'
     interval = 'test'
 
-    response = serply.serp(domain=domain, query=query)
+    if interval == 'test':
+        response = serply.serp(domain=domain, website=website, query=query)
+    else:
+        response = serply.serpMock(domain=domain, website=website, query=query)
 
     serp = Serp(
         NOTIFICATION_PK=NOTIFICATION_PK,
