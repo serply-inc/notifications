@@ -18,7 +18,7 @@ def slack_manifest():
     manifest_file = Path('src/integration_slack/manifest.template.yaml')
     manifest_template = manifest_file.read_text()
 
-    api_url = find_value_by_key_start(data, 'NotificationsRestApiEndpoint')
+    api_url = find_value_by_key_start(data, f'NotificationsRestApi{SERPLY_CONFIG.STAGE_SUFFIX}Endpoint')
 
     manifest = manifest_template.replace(
         'API_URL', api_url + 'slack'

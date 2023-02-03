@@ -1,8 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(
     name='serply_notifications',
     version='1.0.0',
-    package_dir={'': f'src'},
+    packages=find_packages('src'),
+    package_dir={
+        '': 'src',
+    },
 )

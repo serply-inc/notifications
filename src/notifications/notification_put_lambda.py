@@ -11,23 +11,22 @@ def handler(event, context):
 
     print(json.dumps(event))
 
-    input = event.get('detail').get('input')
-    headers = event.get('detail').get('headers')
+    detail_type = event.get('detail-type')
+    detail_notification = event.get('detail').get('notification')
 
     notification = Notification(
-        type=input.get('detail-type'),
-        domain=input.get('domain'),
-        interval=input.get('interval'),
-        website=input.get('website'),
-        query=input.get('query'),
+        type=detail_type,
+        domain=detail_notification.get('domain'),
+        interval=detail_notification.get('interval'),
+        website=detail_notification.get('website'),
+        query=detail_notification.get('query'),
     )
 
     notifications.put(notification)
 
     scheduler.schedule(
         notification=notification,
-        input=input,
-        headers=headers,
+        input=event
     )
 
     return {'ok': True}

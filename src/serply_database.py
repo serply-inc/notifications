@@ -46,7 +46,7 @@ class Notification:
 
 
 @dataclass
-class Serp:
+class SerpNotification:
     SK: str = field(init=False)
     PK: str = field(init=False)
     SCHEDULE_HASH: str = field(init=False)

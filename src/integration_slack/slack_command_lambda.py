@@ -1,16 +1,16 @@
 import boto3
 import json
-from serply_events import NotificationEvents
-from serply_slack_api import SlackCommand
+from serply_events import NotificationEventBus
+from slack_api import SlackCommand
 from urllib.parse import parse_qs
 
 
-events = NotificationEvents(boto3.client('events'))
+notification_event_bus = NotificationEventBus(boto3.client('events'))
 
 
 def validate_command(command):
 
-    valid_commands = ['serp']
+    # valid_commands = ['serp']
 
     # if parser.type not in valid_commands:
     #     ack(
@@ -21,6 +21,7 @@ def validate_command(command):
     #     return
     # else:
     #     ack()
+    
     pass
 
 
@@ -31,17 +32,20 @@ def get_challenge(body):
 
 
 def get(data: dict, key: str):
-    return data.get(key)[0] if type(data.get(key)) == list else data.get(key)
+    return data.get(key)[0] if type(data.get(key)) == list and len(data.get(key)) > 0 else data.get(key)
 
 
 def querystring_asdict(querystring: str):
     values = dict()
-    for key in parse_qs(querystring).keys():
+    input = parse_qs(querystring)
+    for key in input.keys():
         values[key] = get(input, key)
     return values
 
 
 def handler(event, context):
+    
+    print(json.dumps(event))
     
     challenge = get_challenge(event.get('body'))
 
@@ -60,7 +64,7 @@ def handler(event, context):
 
     # @todo validated signature or raise exception
     
-    events.trigger(
+    notification_event_bus.put(
         notification=notification,
         input=input,
         headers=headers,

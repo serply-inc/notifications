@@ -1,9 +1,10 @@
 import json
 import re
-import urllib3
 from dataclasses import asdict, dataclass, field
+from urllib3 import PoolManager
 
-http = urllib3.PoolManager()
+
+http = PoolManager()
 
 
 REGEX_COMMAND_TYPE = r'(serp)'
@@ -46,10 +47,10 @@ class SlackClient:
         self._bot_key = bot_key
 
     def notify(self, message: dict):
-        
-        pass
+        print('notify')
+        print(message)
 
-    def respond(self, respond_url: str, message: dict):
+    def respond(self, response_url: str, message: dict):
 
         try:
 
@@ -57,7 +58,7 @@ class SlackClient:
 
             response = http.request(
                 'POST',
-                respond_url,
+                response_url,
                 body=request,
                 headers={'Content-Type': 'application/json'}
             )

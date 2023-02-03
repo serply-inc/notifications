@@ -5,10 +5,7 @@ from aws_cdk import (
     aws_events_targets as events_targets,
     aws_iam as iam,
     aws_lambda as _lambda,
-    aws_lambda_destinations as lambda_destinations,
-    aws_lambda_event_sources as lambda_event_sources,
     aws_scheduler as scheduler,
-    CfnTag,
     Duration,
     RemovalPolicy,
     Stack,
@@ -75,6 +72,7 @@ class SerplyStack(Stack):
             code=_lambda.Code.from_asset(config.SLACK_DIR),
             handler='slack_command_lambda.handler',
             timeout=Duration.seconds(5),
+            layers=[lambda_layer],
             environment={
                 'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'STAGE': config.STAGE,
@@ -181,7 +179,7 @@ class SerplyStack(Stack):
         )
 
         rest_api = apigateway.RestApi(
-            self, 'NotificationsRestApi',
+            self, f'NotificationsRestApi{config.STAGE_SUFFIX}',
             default_cors_preflight_options=cors_options,
             endpoint_export_name=f'NotificationsRestApiUrl{config.STAGE_SUFFIX}',
             cloud_watch_role=True,

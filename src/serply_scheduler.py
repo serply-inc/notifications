@@ -27,17 +27,15 @@ class NotificationScheduler:
 
     def __init__(self, scheduler_client: object) -> None:
         self._scheduler_client = scheduler_client
-        self._event_bus_name = SERPLY_CONFIG.EVENT_BUS_NAME
-        self._schedule_group_name = SERPLY_CONFIG.SCHEDULE_GROUP_NAME
 
-    def schedule(self, notification: Notification, input: dict = {}, headers: dict = {}):
+    def schedule(self, notification: Notification, input: dict = {}):
 
         response = self._scheduler_client.create_schedule(
             FlexibleTimeWindow={
-                'MaximumWindowInMinutes': 10,
-                'Mode': 'OFF' if notification.interval == 'test' else 'FLEXIBLE',
+                # 'MaximumWindowInMinutes': 10,
+                'Mode': 'OFF', # or FLEXIBLE with MaximumWindowInMinutes
             },
-            GroupName=self._schedule_group_name,
+            GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
             Name=notification.SCHEDULE_HASH,
             ScheduleExpression=self.intervals.get(notification.interval),
             ScheduleExpressionTimezone=SERPLY_CONFIG.SERPLY_TIMEZONE,
@@ -45,11 +43,7 @@ class NotificationScheduler:
             Target={
                 'Arn': SERPLY_CONFIG.SCHEDULE_TARGET_ARN,
                 'RoleArn': SERPLY_CONFIG.SCHEDULE_ROLE_ARN,
-                'Input': json.dumps({
-                    'notification': asdict(notification),
-                    'input': input,
-                    'headers': headers,
-                }),
+                'Input': json.dumps(input),
                 'RetryPolicy': {
                     'MaximumRetryAttempts': self.max_retry_attempts.get(notification.interval),
                 },

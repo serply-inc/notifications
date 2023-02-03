@@ -2,36 +2,47 @@ import boto3
 import json
 from serply_api import SerplyClient
 from serply_config import SERPLY_CONFIG
-from serply_database import NotificationsDatabase, Serp
+from serply_database import NotificationsDatabase, Notification, SerpNotification
+from serply_events import NotificationEventBus
 
 notifications = NotificationsDatabase(boto3.resource('dynamodb'))
+notification_event_bus = NotificationEventBus(boto3.client('events'))
 serply = SerplyClient(SERPLY_CONFIG.SERPLY_API_KEY)
-
-events = boto3.client('events')
 
 
 def handler(event, context):
 
     print(json.dumps(event))
 
-    input = event.get('input')
+    detail_type = event.get('detail-type')
+    detail_notification = event.get('detail').get('notification')
+    detail_input = event.get('detail').get('input')
+    detail_headers = event.get('detail').get('headers')
 
-    mock = input.get('interval') == 'test'
+    notification = Notification(
+        type=detail_type,
+        domain=detail_notification.get('domain'),
+        interval=detail_notification.get('interval'),
+        website=detail_notification.get('website'),
+        query=detail_notification.get('query'),
+    )
+
+    mock = 'test' in notification.interval
 
     response = serply.serp(
-        domain=input.get('domain'),
-        website=input.get('website'),
-        query=input.get('query'),
+        domain=notification.domain,
+        website=notification.website,
+        query=notification.query,
         mock=mock,
     )
 
-    serp = Serp(
-        NOTIFICATION_PK=input.get('NOTIFICATION_PK'),
-        NOTIFICATION_SK=input.get('NOTIFICATION_SK'),
-        domain=input.get('domain'),
-        domain_or_website=input.get('domain_or_website'),
-        query=input.get('query'),
-        interval=input.get('interval'),
+    serp_notification = SerpNotification(
+        NOTIFICATION_PK=notification.PK,
+        NOTIFICATION_SK=notification.SK,
+        domain=notification.domain,
+        domain_or_website=notification.domain_or_website,
+        query=notification.query,
+        interval=notification.interval,
         serp_position=response.position,
         serp_searched_results=response.searched_results,
         serp_domain=response.domain,
@@ -41,12 +52,12 @@ def handler(event, context):
         serp_description=response.description,
     )
 
-    notifications.put(serp)
+    notifications.put(serp_notification)
 
-    events.trigger(
-        notification=event.get('notification'),
-        input=event.get('input'),
-        headers=event.get('headers'),
+    notification_event_bus.put(
+        notification=serp_notification,
+        input=detail_input,
+        headers=detail_headers,
     )
 
     return {'ok': True}

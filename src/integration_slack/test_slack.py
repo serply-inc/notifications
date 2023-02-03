@@ -1,5 +1,7 @@
 from dataclasses import asdict
-from integration_slack.api import SlackCommand
+from slack_api import SlackCommand
+from slack_command_lambda import querystring_asdict
+from urllib.parse import parse_qs
 
 commands = {
     'serp <http://google.com|google.com> "q=foo+bar"': {
@@ -53,3 +55,18 @@ def test_slack_parse_command():
         command_dict = asdict(SlackCommand(command))
         for key in keys:
             assert command_dict.get(key) == expected_dictionary.get(key)
+
+
+def test_querystring_asdict():
+
+    expected_parse_qs = {
+        'foo': ['bar']
+    }
+
+    assert parse_qs('foo=bar&bing=') == expected_parse_qs
+
+    expected_querystring_asdict = {
+        'foo': 'bar'
+    }
+
+    assert querystring_asdict('foo=bar&bing=') == expected_querystring_asdict

@@ -40,7 +40,6 @@ class SerplyClient:
                 query=query,
                 domain=domain,
                 website=website,
-                num=num,
             )
         
         if domain is None and website is None:

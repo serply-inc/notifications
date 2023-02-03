@@ -12,6 +12,8 @@ cdk.out
 src/layer/python/lib/python3.9/*
 !src/layer/python/lib/python3.9/requirements.txt
 
+src/**/serply_events.py
+
 .env
 .env.*
 !.env.example

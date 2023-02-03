@@ -3,13 +3,16 @@ from datetime import datetime
 from dotenv import load_dotenv
 from os import getenv, path
 
+
 STAGE = getenv('STAGE', 'dev')
-STAGE_SUFFIX = STAGE.title()
-STACK_NAME = getenv('STACK_NAME', 'Serply')
-STACK_NAME_FULL = f'{STACK_NAME}Stack{STAGE_SUFFIX}'
+
 
 load_dotenv(f'.env.{STAGE}')
 
+
+STACK_NAME = getenv('STACK_NAME', 'Serply')
+STAGE_SUFFIX = STAGE.title()
+STACK_NAME_FULL = f'{STACK_NAME}Stack{STAGE_SUFFIX}'
 SRC_DIR = path.dirname(path.realpath(__file__))
 ROOT_DIR = path.dirname(SRC_DIR)
 
