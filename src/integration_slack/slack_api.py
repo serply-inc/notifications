@@ -18,7 +18,6 @@ REGEX_WEBSITE = r'<(https?://[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{
 class SlackCommand:
     text: str
     type: str = field(init=False)
-    type_name: str = field(init=False)
     website: str = field(init=False)
     domain: str = field(init=False)
     query: str = field(init=False)
@@ -32,9 +31,7 @@ class SlackCommand:
         return default_value
 
     def __post_init__(self):
-        type_name_map = {'serp': 'SERP'}
         self.type = self._search(REGEX_COMMAND_TYPE, '')
-        self.type_name = type_name_map.get(self.type)
         self.domain = self._search(REGEX_DOMAIN) if '|' in self.text else None
         self.website = self._search(REGEX_WEBSITE) if 'http' in self.text else None
         self.query = re.sub(r'^q=', '', self._search(rf'["\'](.*)["\']'))
@@ -59,6 +56,8 @@ class SlackClient:
                 'channel': message.channel,
                 'blocks': message.blocks,
             }
+            
+            print(payload)
 
             request = json.dumps(payload).encode('utf-8')
 
@@ -88,6 +87,8 @@ class SlackClient:
                 'blocks': message.blocks,
                 'response_type': message.response_type,
             }
+
+            print(payload)
 
             request = json.dumps(payload).encode('utf-8')
 

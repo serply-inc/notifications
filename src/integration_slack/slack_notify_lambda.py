@@ -23,7 +23,6 @@ def handler(event, context):
         interval=detail_notification.get('interval'),
         query=detail_notification.get('query'),
         type=detail_notification.get('type'),
-        type_name=detail_notification.get('type_name'),
         website=detail_notification.get('website'),
         serp_position=detail_notification.get('serp_position'),
         serp_searched_results=detail_notification.get('serp_searched_results'),

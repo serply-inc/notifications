@@ -19,7 +19,6 @@ def handler(event, context):
         user_id=detail_input.get('user_id'),
         interval=detail_notification.get('interval'),
         type=detail_notification.get('type'),
-        type_name=detail_notification.get('type_name'),
         domain=detail_notification.get('domain'),
         domain_or_website=detail_notification.get('domain_or_website'),
         query=detail_notification.get('query'),
