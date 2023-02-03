@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 import json
 import sys
-from serply_config import Config, get_parameter_name, STAGE
-from dotenv import load_dotenv
+from serply_config import get_parameter_name, SERPLY_CONFIG
 from os import getenv, system
 from pathlib import Path
-
-load_dotenv(f'.env.{STAGE}')
 
 
 def find_value_by_key_start(data: dict, start: str):
     return [v for k, v in data.items() if k.startswith(start)][0]
 
 
-def slack_manifest(stage: str):
-    outputs_file = open(f'cdk.out/serply_outputs_{stage}.json')
+def slack_manifest():
+    outputs_file = open(f'cdk.out/serply_outputs_{SERPLY_CONFIG.STAGE}.json')
     outputs = json.load(outputs_file)
-    data = outputs[f'SerplyStack{stage.title()}']
+    data = outputs[SERPLY_CONFIG.STACK_NAME_FULL]
 
     manifest_file = Path('src/integration_slack/manifest.template.yaml')
     manifest_template = manifest_file.read_text()
@@ -26,10 +23,10 @@ def slack_manifest(stage: str):
     manifest = manifest_template.replace(
         'API_URL', api_url + 'slack'
     ).replace(
-        'STAGE', stage
+        'STAGE', SERPLY_CONFIG.STAGE
     )
 
-    manifest_filename = f'slack_manifest.{stage}.yaml'
+    manifest_filename = f'slack_manifest.{SERPLY_CONFIG.STAGE}.yaml'
 
     file = open(manifest_filename, 'w+')
     file.write(manifest)
@@ -40,9 +37,7 @@ def slack_manifest(stage: str):
 
 def ssm_put_parameters():
 
-    aws_profile = getenv('AWS_PROFILE', 'default')
-
-    for secret_name in Config.SECRET_NAMES:
+    for secret_name in SERPLY_CONFIG.SECRET_KEYS:
 
         command = [
             'aws ssm put-parameter --overwrite --type SecureString',
@@ -50,7 +45,7 @@ def ssm_put_parameters():
             f'--value "{getenv(secret_name)}"'
         ]
 
-        command.append(f'--profile {aws_profile}')
+        command.append(f'--profile {SERPLY_CONFIG.AWS_PROFILE}')
 
         system(' '.join(command))
 
@@ -60,7 +55,7 @@ def ssm_put_parameters():
 
 
 if len(sys.argv) == 2 and sys.argv[1] == 'slack':
-    slack_manifest(STAGE)
+    slack_manifest()
 
 elif len(sys.argv) == 2 and sys.argv[1] == 'secrets':
     ssm_put_parameters()

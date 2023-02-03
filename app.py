@@ -22,7 +22,7 @@ app = cdk.App()
 # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
 
 SerplyStack(
-    app, f'SerplyStack{SERPLY_CONFIG.STAGE.title()}',
+    app, SERPLY_CONFIG.STACK_NAME_FULL,
     env=None,
     config=SERPLY_CONFIG,
 )

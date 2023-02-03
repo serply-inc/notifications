@@ -25,7 +25,7 @@ class SerplyStack(Stack):
         RUNTIME = _lambda.Runtime.PYTHON_3_9
 
         lambda_layer = _lambda.LayerVersion(
-            self, 'SerplyLambdaLayer',
+            self, f'{config.STACK_NAME}LambdaLayer',
             code=_lambda.Code.from_asset(config.LAYER_DIR),
             compatible_runtimes=[RUNTIME],
             compatible_architectures=[
@@ -57,7 +57,7 @@ class SerplyStack(Stack):
         )
 
         scheduler_role = iam.Role(
-            self, 'SchedulerRole',
+            self, 'SerplySchedulerRole',
             assumed_by=iam.ServicePrincipal('scheduler.amazonaws.com'),
         )
         

@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 from os import getenv, path
 
 STAGE = getenv('STAGE', 'dev')
-STAGE_SUFFIX=STAGE.title()
+STAGE_SUFFIX = STAGE.title()
+STACK_NAME = getenv('STACK_NAME', 'Serply')
+STACK_NAME_FULL = f'{STACK_NAME}Stack{STAGE_SUFFIX}'
 
 load_dotenv(f'.env.{STAGE}')
 
@@ -28,9 +30,12 @@ class SerplyConfig:
     SERPLY_API_KEY: str
     SERPLY_TIMEZONE: str
     SLACK_BOT_TOKEN: str
+    STACK_NAME: str
+    STACK_NAME_FULL: str
     STAGE: str
     STAGE_SUFFIX: str
     SRC_DIR: str
+    SECRET_KEYS: list[str]
 
 
 SERPLY_CONFIG = SerplyConfig(
@@ -38,9 +43,9 @@ SERPLY_CONFIG = SerplyConfig(
     DEFAULT_ACCOUNT=getenv('ACCOUNT', '98a64bf66ad64b7aa23227d882d91249'),
     SRC_DIR=SRC_DIR,
     ROOT_DIR=ROOT_DIR,
-    EVENT_BUS_NAME=f'SerplyNotificationsEventBus{STAGE_SUFFIX}',
-    NOTIFICATION_TABLE_NAME=f'SerplyNotifications{STAGE_SUFFIX}',
-    SCHEDULE_GROUP_NAME=f'SerplyNotificationScheduleGroup{STAGE_SUFFIX}',
+    EVENT_BUS_NAME=f'{STACK_NAME}NotificationsEventBus{STAGE_SUFFIX}',
+    NOTIFICATION_TABLE_NAME=f'{STACK_NAME}Notifications{STAGE_SUFFIX}',
+    SCHEDULE_GROUP_NAME=f'{STACK_NAME}NotificationScheduleGroup{STAGE_SUFFIX}',
     SCHEDULE_ROLE_ARN=getenv('SCHEDULE_ROLE_ARN'),
     SCHEDULE_TARGET_ARN=getenv('SCHEDULE_TARGET_ARN'),
     SERPLY_API_KEY=getenv('SERPLY_API_KEY'),
@@ -48,10 +53,18 @@ SERPLY_CONFIG = SerplyConfig(
     SERPLY_TIMEZONE=getenv('SERPLY_TIMEZONE', 'America/Chicago'),
     SLACK_BOT_TOKEN=getenv('SLACK_BOT_TOKEN'),
     STAGE=STAGE,
-    STAGE_SUFFIX=STAGE.title(),
+    STAGE_SUFFIX=STAGE_SUFFIX,
+    STACK_NAME=STACK_NAME,
+    STACK_NAME_FULL=STACK_NAME_FULL,
     LAYER_DIR=f'{SRC_DIR}/layer',
     NOTIFICATIONS_DIR=f'{SRC_DIR}/notifications',
     SLACK_DIR=f'{SRC_DIR}/integration_slack',
+    SECRET_KEYS=[
+        'ACCOUNT',
+        'SLACK_BOT_TOKEN',
+        'SLACK_SIGNING_SECRET',
+        'SERPLY_API_KEY',
+    ]
 )
 
 
@@ -84,13 +97,6 @@ def get_parameter_name(key):
 
 
 class Secrets:
-
-    SECRET_NAMES = [
-        'ACCOUNT',
-        'SLACK_BOT_TOKEN',
-        'SLACK_SIGNING_SECRET',
-        'SERPLY_API_KEY',
-    ]
 
     def __init__(self, ssm: object) -> None:
         self._ssm = ssm
