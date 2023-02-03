@@ -38,28 +38,21 @@ class SerpNotificationMessage:
                 }
             },
             {
-                "type": "divider"
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f'*title:* {self.serp_title}'
+                }
             },
             {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*title:* {self.serp_title}'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*description:* {self.serp_description}'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*domain:* {self.serp_domain}'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*serp:* {self.serp_query}'
-                    },
-                ]
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f'*description:* {self.serp_description}'
+                }
+            },
+            {
+                "type": "divider"
             },
         ]
 
@@ -121,5 +114,8 @@ class NotificationScheduledMessage:
                         'text': f'*interval:* {self.interval}'
                     },
                 ]
+            },
+            {
+                "type": "divider"
             },
         ]
