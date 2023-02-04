@@ -22,7 +22,7 @@ class SerplyStack(Stack):
         RUNTIME = _lambda.Runtime.PYTHON_3_9
 
         lambda_layer = _lambda.LayerVersion(
-            self, f'{config.STACK_NAME}LambdaLayer',
+            self, f'{config.STACK_NAME}LambdaLayer{config.STAGE_SUFFIX}',
             code=_lambda.Code.from_asset(config.LAYER_DIR),
             compatible_runtimes=[RUNTIME],
             compatible_architectures=[
@@ -37,17 +37,6 @@ class SerplyStack(Stack):
         )
 
         event_bus.apply_removal_policy(RemovalPolicy.DESTROY)
-
-        # event_bus_put_policy = iam.Policy(
-        #     self, 'NotificationsEventBusPolicy',
-        #     statements=[
-        #         iam.PolicyStatement(
-        #             effect=iam.Effect.ALLOW,
-        #             resources=['*'],
-        #             actions=['events:PutEvents'],
-        #         )
-        #     ]
-        # )
 
         scheduler_managed_policy = iam.ManagedPolicy.from_aws_managed_policy_name(
             'AmazonEventBridgeSchedulerFullAccess'
@@ -75,6 +64,7 @@ class SerplyStack(Stack):
             layers=[lambda_layer],
             environment={
                 'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
@@ -87,8 +77,10 @@ class SerplyStack(Stack):
             code=_lambda.Code.from_asset(config.SLACK_DIR),
             handler='slack_respond_lambda.handler',
             timeout=Duration.seconds(5),
+            layers=[lambda_layer],
             environment={
                 'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
@@ -103,6 +95,7 @@ class SerplyStack(Stack):
             environment={
                 'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
+                'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
@@ -117,6 +110,7 @@ class SerplyStack(Stack):
             environment={
                 'SERPLY_API_KEY': config.SERPLY_API_KEY,
                 'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
+                'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
@@ -135,6 +129,7 @@ class SerplyStack(Stack):
                 'SCHEDULE_TARGET_ARN': notification_serp_lambda.function_arn,
                 'SCHEDULE_ROLE_ARN': scheduler_role.role_arn,
                 'SERPLY_TIMEZONE': config.SERPLY_TIMEZONE,
+                'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
@@ -180,7 +175,7 @@ class SerplyStack(Stack):
         )
 
         rest_api = apigateway.RestApi(
-            self, f'NotificationsRestApi{config.STAGE_SUFFIX}',
+            self, f'NotificationsRestApi',
             default_cors_preflight_options=cors_options,
             endpoint_export_name=f'NotificationsRestApiUrl{config.STAGE_SUFFIX}',
             cloud_watch_role=True,

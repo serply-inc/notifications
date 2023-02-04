@@ -6,13 +6,14 @@ from serply_database import Notification
 
 @dataclass
 class ScheduleResponse:
-    arn: str
+    arn: str = None
+    name: str = None
 
 
 class NotificationScheduler:
 
     intervals = {
-        'test': 'rate(1 minute)',
+        'test': 'rate(10 minutes)',
         'daily': 'rate(1 day)',
         'weekly': 'rate(1 week)',
         'monthly': 'rate(1 month)',
@@ -28,12 +29,12 @@ class NotificationScheduler:
     def __init__(self, scheduler_client: object) -> None:
         self._scheduler_client = scheduler_client
 
-    def schedule(self, notification: Notification, input: dict = {}):
+    def create_schedule(self, notification: Notification, input: dict = {}):
 
         response = self._scheduler_client.create_schedule(
             FlexibleTimeWindow={
                 # 'MaximumWindowInMinutes': 10,
-                'Mode': 'OFF', # or FLEXIBLE with MaximumWindowInMinutes
+                'Mode': 'OFF',  # or FLEXIBLE with MaximumWindowInMinutes
             },
             GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
             Name=notification.SCHEDULE_HASH,
@@ -51,3 +52,49 @@ class NotificationScheduler:
         )
 
         return ScheduleResponse(arn=response.get('ScheduleArn'))
+
+    def delete_schedule(self, notification: Notification):
+
+        name = notification.SCHEDULE_HASH
+
+        try:
+
+            self._scheduler_client.delete_schedule(
+                GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
+                ClientToken=name,
+                Name=name
+            )
+
+            return ScheduleResponse(name=name)
+
+        except:
+
+            return ScheduleResponse(name=name)
+
+    def get_schedule(self, notification: Notification):
+
+        name = notification.SCHEDULE_HASH
+
+        try:
+
+            response = self._scheduler_client.get_schedule(
+                GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
+                Name=notification.SCHEDULE_HASH,
+            )
+
+            return ScheduleResponse(name=name, arn=response.get('Arn'))
+
+        except:
+
+            return ScheduleResponse(name=name)
+
+    def schedule(self, notification: Notification, input: dict = {}):
+
+        self.delete_schedule(notification=notification)
+
+        schedule = self.create_schedule(
+            notification=notification,
+            input=input,
+        )
+
+        return schedule
