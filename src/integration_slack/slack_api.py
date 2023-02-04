@@ -85,7 +85,7 @@ class SlackClient:
 
             payload = {
                 'blocks': message.blocks,
-                'response_type': message.response_type,
+                'response_type': 'in_channel',
             }
 
             print(payload)

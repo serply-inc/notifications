@@ -2,7 +2,7 @@ import boto3
 import json
 from serply_api import SerplyClient
 from serply_config import SERPLY_CONFIG
-from serply_database import NotificationsDatabase, Notification, SerpNotification
+from serply_database import NotificationsDatabase, SerpNotification, notification_from_dict
 from serply_events import NotificationEventBus
 
 notifications = NotificationsDatabase(boto3.resource('dynamodb'))
@@ -14,18 +14,10 @@ def handler(event, context):
 
     print(json.dumps(event))
 
-    detail_type = event.get('detail-type')
-    detail_notification = event.get('detail').get('notification')
     detail_input = event.get('detail').get('input')
     detail_headers = event.get('detail').get('headers')
 
-    notification = Notification(
-        type=detail_type,
-        domain=detail_notification.get('domain'),
-        interval=detail_notification.get('interval'),
-        website=detail_notification.get('website'),
-        query=detail_notification.get('query'),
-    )
+    notification = notification_from_dict(event.get('detail').get('notification'))
 
     response = serply.serp(
         domain=notification.domain,

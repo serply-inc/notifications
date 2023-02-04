@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from serply_config import SERPLY_CONFIG
 
 
 @dataclass
@@ -8,15 +9,10 @@ class SerpNotificationMessage:
     serp_position: int
     channel: str
     domain: str
-    domain_or_website: str
     interval: str
-    type: str
     query: str
-    user_id: str
     website: str
     serp_searched_results: str
-    serp_domain: str
-    serp_query: str
 
     def __post_init__(self):
 
@@ -45,7 +41,7 @@ class SerpNotificationMessage:
                 'elements': [
                     {
                         'type': 'mrkdwn',
-                        'text': f'*SERP Notification* | {TEXT_ONE_TIME if self.interval in ["once", "mock"] else TEXT_YOU_RECEIVE}'
+                        'text': f'*SERP Notification* | {TEXT_ONE_TIME if self.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS else TEXT_YOU_RECEIVE}'
                     }
                 ]
             },
@@ -67,7 +63,6 @@ class NotificationScheduledMessage:
     query: str
     user_id: str
     website: str
-    response_type: str = 'in_channel'
 
     def __post_init__(self):
 
@@ -76,7 +71,7 @@ class NotificationScheduledMessage:
                 'type': 'header',
                 'text': {
                     'type': 'plain_text',
-                    'text': f'SERP Schedule Configured',
+                    'text': f'{SERPLY_CONFIG.TYPE_NAME_MAP.get(self.type)} Schedule Configured',
                 }
             },
             {

@@ -11,10 +11,6 @@ from serply_config import (
 )
 
 
-def schedule_hash(obj: str):
-    return blake2b(bytes(f'{obj.NOTIFICATION_PK}#{obj.NOTIFICATION_SK}', 'utf-8'), digest_size=32).hexdigest()
-
-
 @dataclass
 class Notification:
     SK: str = field(init=False)
@@ -87,3 +83,20 @@ class NotificationsDatabase:
         # Filter values that are None
         item = {k: v for k, v in asdict(data).items() if v is not None}
         return self._table.put_item(Item=item)
+
+
+def schedule_hash(notification: Notification):
+    return blake2b(bytes('#'.join([
+        notification.NOTIFICATION_PK,
+        notification.NOTIFICATION_SK,
+    ]), 'utf-8'), digest_size=32).hexdigest()
+
+
+def notification_from_dict(data: dict):
+    return Notification(
+        type=data.get('type'),
+        domain=data.get('domain'),
+        interval=data.get('interval'),
+        website=data.get('website'),
+        query=data.get('query'),
+    )

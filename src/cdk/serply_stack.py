@@ -63,7 +63,6 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
@@ -79,7 +78,6 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
@@ -93,12 +91,13 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
+
+        slack_notify_lambda.role.add_managed_policy(scheduler_managed_policy)
 
         notification_serp_lambda = _lambda.Function(
             self, 'NotificationSerpLambdaFunction',
@@ -109,7 +108,6 @@ class SerplyStack(Stack):
             layers=[lambda_layer],
             environment={
                 'SERPLY_API_KEY': config.SERPLY_API_KEY,
-                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
@@ -125,10 +123,8 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'DEFAULT_ACCOUNT': config.DEFAULT_ACCOUNT,
                 'SCHEDULE_TARGET_ARN': notification_serp_lambda.function_arn,
                 'SCHEDULE_ROLE_ARN': scheduler_role.role_arn,
-                'SERPLY_TIMEZONE': config.SERPLY_TIMEZONE,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },

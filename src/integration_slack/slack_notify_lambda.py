@@ -1,17 +1,19 @@
+import boto3
 import json
 from serply_config import SERPLY_CONFIG
 from slack_api import SlackClient
 from slack_messages import SerpNotificationMessage
+from serply_database import notification_from_dict
+from serply_scheduler import NotificationScheduler
 
 
 slack = SlackClient(SERPLY_CONFIG.SLACK_BOT_TOKEN)
-
+scheduler = NotificationScheduler(boto3.client('scheduler'))
 
 def handler(event, context):
 
     print(json.dumps(event))
 
-    # detail_type = event.get('detail-type')
     detail_notification = event.get('detail').get('notification')
     detail_input = event.get('detail').get('input')
 
@@ -33,5 +35,11 @@ def handler(event, context):
     slack_response = slack.notify(message)
     
     print(json.dumps(slack_response))
+    
+    notification = notification_from_dict(event.get('detail').get('notification'))
+    
+    if notification.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
+
+        scheduler.delete_schedule(notification)
 
     return {'ok': True}
