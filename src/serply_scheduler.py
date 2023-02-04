@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from dataclasses import dataclass
 from serply_config import SERPLY_CONFIG
 from serply_database import Notification

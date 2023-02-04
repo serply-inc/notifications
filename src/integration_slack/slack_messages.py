@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+
 @dataclass
 class SerpNotificationMessage:
 
@@ -19,25 +20,40 @@ class SerpNotificationMessage:
 
     def __post_init__(self):
 
+        TEXT_ONE_TIME = f'This is a *one-time* response.'
+        TEXT_YOU_RECEIVE = f'You receive this notification *{self.interval}*.'
+
         self.blocks = [
             {
-                'type': 'header',
+                'type': 'section',
                 'text': {
-                    'type': 'plain_text',
-                    'text': f'SERP {self.interval.title()} Notification',
-                }
+                    'type': 'mrkdwn',
+                    'text': f'> {self.domain if self.domain else self.website} in position `{self.serp_position}` for `{self.query}` from `{self.serp_searched_results}` results.'
+                },
+                'accessory': {
+                    'type': 'button',
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Disable',
+                    },
+                    'value': 'schedule_hash',
+                    'action_id': 'disable',
+                },
             },
             {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f'*{self.domain if self.domain else self.website}* has position `{self.serp_position}` for `{self.query}` from `{self.serp_searched_results}` searched results.'
-                }
+                'type': 'context',
+                'elements': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': f'*SERP Notification* | {TEXT_ONE_TIME if self.interval in ["once", "mock"] else TEXT_YOU_RECEIVE}'
+                    }
+                ]
             },
             {
-                "type": "divider"
+                'type': 'divider'
             },
         ]
+
 
 @dataclass
 class NotificationScheduledMessage:
@@ -55,50 +71,44 @@ class NotificationScheduledMessage:
 
     def __post_init__(self):
 
-        type_name_map = {
-            'serp': 'SERP',
-        }
-
-        type_name = type_name_map.get(self.type)
-
         self.blocks = [
             {
                 'type': 'header',
                 'text': {
                     'type': 'plain_text',
-                    'text': f'{type_name} Notification Scheduled {self.interval.title()}',
+                    'text': f'SERP Schedule Configured',
                 }
             },
             {
                 'type': 'section',
-                'fields': [
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join([
+                        f'*{self.domain_or_website}:* {self.domain if self.domain else self.website}',
+                        f'*query:* `{self.query}`',
+                        f'*interval:* `{self.interval}`',
+                    ])
+                },
+                'accessory': {
+                    'type': 'button',
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Disable',
+                    },
+                    'value': 'schedule_hash',
+                    'action_id': 'disable',
+                },
+            },
+            {
+                'type': 'context',
+                'elements': [
                     {
                         'type': 'mrkdwn',
-                        'text': f'*by:* <@{self.user_id}>',
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*channel:* <#{self.channel}>'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*type:* {self.type}'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*{self.domain_or_website}:* {self.domain if self.domain else self.website}'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*query:* {self.query}'
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': f'*interval:* {self.interval}'
-                    },
+                        'text': f'Configured by <@{self.user_id}> in <#{self.channel}>'
+                    }
                 ]
             },
             {
-                "type": "divider"
+                'type': 'divider'
             },
         ]
