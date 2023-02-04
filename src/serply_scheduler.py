@@ -1,5 +1,6 @@
 import json
-from dataclasses import asdict, dataclass
+from datetime import datetime
+from dataclasses import dataclass
 from serply_config import SERPLY_CONFIG
 from serply_database import Notification
 
@@ -13,7 +14,6 @@ class ScheduleResponse:
 class NotificationScheduler:
 
     intervals = {
-        'test': 'rate(10 minutes)',
         'daily': 'rate(1 day)',
         'weekly': 'rate(1 week)',
         'monthly': 'rate(1 month)',
@@ -31,6 +31,15 @@ class NotificationScheduler:
 
     def create_schedule(self, notification: Notification, input: dict = {}):
 
+        schedule_expression = self.intervals.get(notification.interval)
+
+        # If this is a test, set a one-time schedule expression at(yyyy-mm-ddThh:mm:ss).
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/scheduler.html#EventBridgeScheduler.Client.create_schedule
+        # https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html#one-time
+        if 'test' in notification.interval:
+
+            schedule_expression = f'at({datetime.today().isoformat(timespec="seconds")})'
+
         response = self._scheduler_client.create_schedule(
             FlexibleTimeWindow={
                 # 'MaximumWindowInMinutes': 10,
@@ -38,7 +47,7 @@ class NotificationScheduler:
             },
             GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
             Name=notification.SCHEDULE_HASH,
-            ScheduleExpression=self.intervals.get(notification.interval),
+            ScheduleExpression=schedule_expression,
             ScheduleExpressionTimezone=SERPLY_CONFIG.SERPLY_TIMEZONE,
             State='ENABLED',
             Target={

@@ -8,8 +8,8 @@ from serply_config import SERPLY_CONFIG
 http = PoolManager()
 
 
-REGEX_COMMAND_TYPE = r'(serp)'
-REGEX_INTERVAL = r'(test|daily|weekly|monthly)'
+REGEX_COMMAND_TYPE = r'^(serp)\s'
+REGEX_INTERVAL = r'\s(test|daily|weekly|monthly)\s?'
 REGEX_DOMAIN = r'\|([a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,})>'
 REGEX_WEBSITE = r'<(https?://[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,})>'
 

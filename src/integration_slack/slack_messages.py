@@ -38,20 +38,6 @@ class SerpNotificationMessage:
                 }
             },
             {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f'*title:* {self.serp_title}'
-                }
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f'*description:* {self.serp_description}'
-                }
-            },
-            {
                 "type": "divider"
             },
         ]
