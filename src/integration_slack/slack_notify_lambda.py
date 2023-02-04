@@ -28,9 +28,6 @@ def handler(event, context):
         serp_searched_results=detail_notification.get('serp_searched_results'),
         serp_domain=detail_notification.get('serp_domain'),
         serp_query=detail_notification.get('serp_query'),
-        serp_title=detail_notification.get('serp_title'),
-        serp_link=detail_notification.get('serp_link'),
-        serp_description=detail_notification.get('serp_description'),
     )
 
     slack_response = slack.notify(message)

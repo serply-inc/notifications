@@ -27,13 +27,11 @@ def handler(event, context):
         query=detail_notification.get('query'),
     )
 
-    mock = 'test' in notification.interval
-
     response = serply.serp(
         domain=notification.domain,
         website=notification.website,
         query=notification.query,
-        mock=mock,
+        mock=notification.interval == 'mock',
     )
 
     serp_notification = SerpNotification(
@@ -47,9 +45,6 @@ def handler(event, context):
         serp_searched_results=response.searched_results,
         serp_domain=response.domain,
         serp_query=response.query,
-        serp_title=response.title,
-        serp_link=response.link,
-        serp_description=response.description,
     )
 
     notifications.put(serp_notification)

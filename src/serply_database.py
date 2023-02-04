@@ -56,9 +56,6 @@ class SerpNotification:
     serp_searched_results: int
     serp_domain: str
     serp_query: str
-    serp_title: str
-    serp_link: str
-    serp_description: str
     domain_or_website: str
     query: str
     type: str = 'serp'

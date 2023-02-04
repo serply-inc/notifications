@@ -16,9 +16,6 @@ class SerpNotificationMessage:
     serp_searched_results: str
     serp_domain: str
     serp_query: str
-    serp_title: str
-    serp_link: str
-    serp_description: str
 
     def __post_init__(self):
 
