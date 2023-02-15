@@ -3,7 +3,7 @@ import json
 from serply_config import SERPLY_CONFIG
 from slack_api import SlackClient
 from slack_messages import SerpNotificationMessage
-from serply_database import notification_from_dict
+from serply_database import schedule_from_dict
 from serply_scheduler import NotificationScheduler
 
 
@@ -14,32 +14,25 @@ def handler(event, context):
 
     print(json.dumps(event))
 
-    detail_notification = event.get('detail').get('notification')
+    detail_schedule = event.get('detail').get('schedule')
     detail_input = event.get('detail').get('input')
 
     message = SerpNotificationMessage(
         channel=detail_input.get('channel_id'),
-        user_id=detail_input.get('user_id'),
-        domain=detail_notification.get('domain'),
-        domain_or_website=detail_notification.get('domain_or_website'),
-        interval=detail_notification.get('interval'),
-        query=detail_notification.get('query'),
-        type=detail_notification.get('type'),
-        website=detail_notification.get('website'),
-        serp_position=detail_notification.get('serp_position'),
-        serp_searched_results=detail_notification.get('serp_searched_results'),
-        serp_domain=detail_notification.get('serp_domain'),
-        serp_query=detail_notification.get('serp_query'),
+        domain=detail_schedule.get('domain'),
+        interval=detail_schedule.get('interval'),
+        query=detail_schedule.get('query'),
+        website=detail_schedule.get('website'),
+        serp_position=detail_schedule.get('serp_position'),
+        serp_searched_results=detail_schedule.get('serp_searched_results'),
     )
 
-    slack_response = slack.notify(message)
-    
-    print(json.dumps(slack_response))
-    
-    notification = notification_from_dict(event.get('detail').get('notification'))
-    
-    if notification.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
+    slack.notify(message)
 
-        scheduler.delete_schedule(notification)
+    schedule = schedule_from_dict(detail_schedule)
+    
+    if schedule.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
+
+        scheduler.delete_schedule(schedule)
 
     return {'ok': True}

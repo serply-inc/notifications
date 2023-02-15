@@ -1,7 +1,7 @@
 import json
 from slack_api import SlackClient
 from slack_messages import NotificationScheduledMessage
-from serply_database import notification_from_dict
+from serply_database import schedule_from_dict
 
 
 slack = SlackClient()
@@ -13,17 +13,17 @@ def handler(event, context):
 
     # detail_type = event.get('detail-type')
     detail_input = event.get('detail').get('input')
-    notification = notification_from_dict(event.get('detail').get('notification'))
+    schedule = schedule_from_dict(event.get('detail').get('schedule'))
 
     message = NotificationScheduledMessage(
         channel=detail_input.get('channel_id'),
         user_id=detail_input.get('user_id'),
-        interval=notification.interval,
-        type=notification.type,
-        domain=notification.domain,
-        domain_or_website=notification.domain_or_website,
-        query=notification.query,
-        website=notification.website,
+        interval=schedule.interval,
+        type=schedule.type,
+        domain=schedule.domain,
+        domain_or_website=schedule.domain_or_website,
+        query=schedule.query,
+        website=schedule.website,
     )
 
     slack.respond(

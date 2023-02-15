@@ -83,7 +83,7 @@ def datetime_string():
     return datetime.today().isoformat()
 
 
-def default_notification_type():
+def default_schedule_type():
     return 'serp'
 
 

@@ -3,12 +3,12 @@ from dataclasses import asdict
 from serply_config import SERPLY_CONFIG
 
 
-class NotificationEventBus:
+class EventBus:
 
     def __init__(self, events_client: object) -> None:
         self._events_client = events_client
 
-    def put(self, detail_type: str, notification: object, input: dict, headers: dict):
+    def put(self, detail_type: str, schedule: object, input: dict, headers: dict):
 
         print(f'detail_type: {detail_type}')
 
@@ -16,7 +16,7 @@ class NotificationEventBus:
             'Source': 'serply',
             'DetailType': detail_type,
             'Detail': json.dumps({
-                'notification': asdict(notification),
+                'schedule': asdict(schedule),
                 'input': input,
                 'headers': headers,
             }),

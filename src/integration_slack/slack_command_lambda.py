@@ -1,11 +1,11 @@
 import boto3
 import json
-from serply_events import NotificationEventBus
+from serply_events import EventBus
 from slack_api import SlackCommand
 from urllib.parse import parse_qs
 
 
-notification_event_bus = NotificationEventBus(boto3.client('events'))
+event_bus = EventBus(boto3.client('events'))
 
 
 def validate_command(command):
@@ -60,13 +60,13 @@ def handler(event, context):
 
     headers = event.get('headers')
     input = querystring_asdict(event.get('body'))
-    notification = SlackCommand(text=input.get('text'))
+    schedule = SlackCommand(text=input.get('text'))
 
     # @todo validated signature or raise exception
     
-    notification_event_bus.put(
-        detail_type=notification.type,
-        notification=notification,
+    event_bus.put(
+        detail_type=schedule.type,
+        schedule=schedule,
         input=input,
         headers=headers,
     )

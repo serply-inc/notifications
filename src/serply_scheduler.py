@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from dataclasses import dataclass
 from serply_config import SERPLY_CONFIG
-from serply_database import Notification
+from serply_database import Schedule
 
 
 @dataclass
@@ -28,7 +28,7 @@ class NotificationScheduler:
     def __init__(self, scheduler_client: object) -> None:
         self._scheduler_client = scheduler_client
 
-    def create_schedule(self, notification: Notification, event: dict = {}):
+    def create_schedule(self, schedule: Schedule, event: dict = {}):
 
         # If this is a test or mock, set a one-time schedule expression at(yyyy-mm-ddThh:mm:ss).
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/scheduler.html#EventBridgeScheduler.Client.create_schedule
@@ -41,9 +41,9 @@ class NotificationScheduler:
                 'Mode': 'OFF',  # or FLEXIBLE with MaximumWindowInMinutes
             },
             GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
-            Name=notification.SCHEDULE_HASH,
+            Name=schedule.hash,
             ScheduleExpression=self.intervals.get(
-                notification.interval
+                schedule.interval
             ) or one_time_expression,
             State='ENABLED',
             Target={
@@ -51,52 +51,52 @@ class NotificationScheduler:
                 'RoleArn': SERPLY_CONFIG.SCHEDULE_ROLE_ARN,
                 'Input': json.dumps(event),
                 'RetryPolicy': {
-                    'MaximumRetryAttempts': self.attempts.get(notification.interval) or 0,
+                    'MaximumRetryAttempts': self.attempts.get(schedule.interval) or 0,
                 },
             }
         )
 
         return ScheduleResponse(arn=response.get('ScheduleArn'))
 
-    def delete_schedule(self, notification: Notification):
+    def delete_schedule(self, schedule: Schedule):
 
         try:
 
             response = self._scheduler_client.delete_schedule(
                 GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
-                ClientToken=notification.SCHEDULE_HASH,
-                Name=notification.SCHEDULE_HASH,
+                ClientToken=schedule.hash,
+                Name=schedule.hash,
             )
 
             print(response)
 
-            return ScheduleResponse(name=notification.SCHEDULE_HASH)
+            return ScheduleResponse(name=schedule.hash)
 
         except:
 
-            return ScheduleResponse(name=notification.SCHEDULE_HASH)
+            return ScheduleResponse(name=schedule.hash)
 
-    def get_schedule(self, notification: Notification):
+    def get_schedule(self, schedule: Schedule):
 
         try:
 
             response = self._scheduler_client.get_schedule(
                 GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
-                Name=notification.SCHEDULE_HASH,
+                Name=schedule.hash,
             )
 
-            return ScheduleResponse(name=notification.SCHEDULE_HASH, arn=response.get('Arn'))
+            return ScheduleResponse(name=schedule.hash, arn=response.get('Arn'))
 
         except:
 
-            return ScheduleResponse(name=notification.SCHEDULE_HASH)
+            return ScheduleResponse(name=schedule.hash)
 
-    def schedule(self, notification: Notification, event: dict = {}):
+    def schedule(self, schedule: Schedule, event: dict = {}):
 
-        self.delete_schedule(notification=notification)
+        self.delete_schedule(schedule=schedule)
 
         schedule = self.create_schedule(
-            notification=notification,
+            schedule=schedule,
             event=event,
         )
 

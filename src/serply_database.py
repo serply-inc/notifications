@@ -3,7 +3,7 @@ from dataclasses import asdict, dataclass, field
 from serply_config import (
     datetime_string,
     default_account,
-    default_notification_type,
+    default_schedule_type,
     default_domain_or_website,
     default_interval,
     default_provider,
@@ -12,14 +12,12 @@ from serply_config import (
 
 
 @dataclass
-class Notification:
-    SK: str = field(init=False)
+class Schedule:
     PK: str = field(init=False)
-    SCHEDULE_HASH: str = field(init=False)
-    NOTIFICATION_PK: str = field(init=False)
-    NOTIFICATION_SK: str = field(init=False)
+    SK: str = field(init=False)
+    hash: str = field(init=False)
     query: str
-    type: str = field(default_factory=default_notification_type)
+    type: str = field(default_factory=default_schedule_type)
     account: str = field(default_factory=default_account)
     created_at: str = field(default_factory=datetime_string)
     domain_or_website: str = field(default_factory=default_domain_or_website)
@@ -30,24 +28,18 @@ class Notification:
     num: int = 100
 
     def __post_init__(self):
-        self.domain_or_website = 'domain' if self.domain else 'website'
-        self.PK = f'notification_{self.account}'
-        self.SK = '#'.join([
-            f'domain_{self.domain}' if self.domain else f'website_{self.website}',
-            f'query_{self.query}',
-        ])
-        self.NOTIFICATION_PK = self.PK
-        self.NOTIFICATION_SK = self.SK
-        self.SCHEDULE_HASH = schedule_hash(self)
+        SCHEDULE_KEY = 'schedule_' + schedule_key(self)
+        self.PK = SCHEDULE_KEY
+        self.SK = SCHEDULE_KEY
+        self.domain_or_website = domain_or_website(self.domain)
+        self.hash = schedule_hash(SCHEDULE_KEY)
 
 
 @dataclass
 class SerpNotification:
-    SK: str = field(init=False)
     PK: str = field(init=False)
-    SCHEDULE_HASH: str = field(init=False)
-    NOTIFICATION_PK: str
-    NOTIFICATION_SK: str
+    SK: str = field(init=False)
+    hash: str = field(init=False)
     serp_position: int
     serp_searched_results: int
     serp_domain: str
@@ -64,12 +56,12 @@ class SerpNotification:
     num: int = 100
 
     def __post_init__(self):
-        self.PK = '#'.join([
-            self.NOTIFICATION_PK,
-            self.NOTIFICATION_SK,
-        ])
-        self.SK = f'serp_{self.created_at}'
-        self.SCHEDULE_HASH = schedule_hash(self)
+        SCHEDULE_KEY = 'schedule_' + schedule_key(self)
+        NOTIFICATION_KEY = 'notification_' + schedule_key(self) + f'#{self.created_at}'
+        self.PK = SCHEDULE_KEY
+        self.SK = NOTIFICATION_KEY
+        self.domain_or_website = domain_or_website(self.domain)
+        self.hash = schedule_hash(SCHEDULE_KEY)
 
 
 class NotificationsDatabase:
@@ -85,15 +77,25 @@ class NotificationsDatabase:
         return self._table.put_item(Item=item)
 
 
-def schedule_hash(notification: Notification):
-    return blake2b(bytes('#'.join([
-        notification.NOTIFICATION_PK,
-        notification.NOTIFICATION_SK,
-    ]), 'utf-8'), digest_size=32).hexdigest()
+def domain_or_website(domain: str = None):
+    return 'domain' if domain else 'website'
 
 
-def notification_from_dict(data: dict):
-    return Notification(
+def schedule_key(object):
+    return '#'.join([
+        object.type,
+        domain_or_website(object.domain),
+        object.domain if object.domain else object.website,
+        object.query,
+    ])
+
+def schedule_hash(SCHEDULE_KEY: str):
+    # 32 bytes will result in a 64 character hash
+    return blake2b(bytes(SCHEDULE_KEY, 'utf-8'), digest_size=32).hexdigest()
+
+
+def schedule_from_dict(data: dict):
+    return Schedule(
         type=data.get('type'),
         domain=data.get('domain'),
         interval=data.get('interval'),

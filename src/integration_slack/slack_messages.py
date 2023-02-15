@@ -41,7 +41,7 @@ class SerpNotificationMessage:
                 'elements': [
                     {
                         'type': 'mrkdwn',
-                        'text': f'*SERP Notification* | {TEXT_ONE_TIME if self.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS else TEXT_YOU_RECEIVE}'
+                        'text': f':bell: *SERP Notification* | {TEXT_ONE_TIME if self.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS else TEXT_YOU_RECEIVE}'
                     }
                 ]
             },
@@ -99,7 +99,7 @@ class NotificationScheduledMessage:
                 'elements': [
                     {
                         'type': 'mrkdwn',
-                        'text': f'Configured by <@{self.user_id}> in <#{self.channel}>'
+                        'text': f':clock1: *Schedule* | Created by <@{self.user_id}> in <#{self.channel}>'
                     }
                 ]
             },
