@@ -10,6 +10,7 @@ from serply_scheduler import NotificationScheduler
 slack = SlackClient(SERPLY_CONFIG.SLACK_BOT_TOKEN)
 scheduler = NotificationScheduler(boto3.client('scheduler'))
 
+
 def handler(event, context):
 
     print(json.dumps(event))
@@ -17,20 +18,23 @@ def handler(event, context):
     detail_schedule = event.get('detail').get('schedule')
     detail_input = event.get('detail').get('input')
 
+    schedule = schedule_from_dict(detail_schedule)
+
     message = SerpNotificationMessage(
         channel=detail_input.get('channel_id'),
-        domain=detail_schedule.get('domain'),
-        interval=detail_schedule.get('interval'),
-        query=detail_schedule.get('query'),
-        website=detail_schedule.get('website'),
         serp_position=detail_schedule.get('serp_position'),
         serp_searched_results=detail_schedule.get('serp_searched_results'),
+        command=schedule.command,
+        domain=schedule.domain,
+        domain_or_website=schedule.domain_or_website,
+        hash=schedule.hash,
+        interval=schedule.interval,
+        query=schedule.query,
+        website=schedule.website,
     )
 
     slack.notify(message)
 
-    schedule = schedule_from_dict(detail_schedule)
-    
     if schedule.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
 
         scheduler.delete_schedule(schedule)

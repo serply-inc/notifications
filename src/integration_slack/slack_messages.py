@@ -6,25 +6,33 @@ from serply_config import SERPLY_CONFIG
 class SerpNotificationMessage:
 
     blocks: list[object] = field(init=False)
-    serp_position: int
     channel: str
     domain: str
+    domain_or_website: str
+    command: str
     interval: str
     query: str
-    website: str
+    serp_position: int
     serp_searched_results: str
+    website: str
+    num: int = 100
 
     def __post_init__(self):
 
-        TEXT_ONE_TIME = f'This is a *one-time* response.'
-        TEXT_YOU_RECEIVE = f'You receive this notification *{self.interval}*.'
+        TEXT_ONE_TIME = f'This is a *one-time* notification.'
+        TEXT_YOU_RECEIVE = f'You receive this notification *{self.interval}*. <!here>'
+
+        website = self.domain if self.domain else self.website
+        total = int(self.serp_searched_results or 0)
+        google_search = f'https://www.google.com/search?q={self.query}&num={self.num}&{self.domain_or_website}={website}'
+        results = f'<{google_search}|{total} results>' if total > 0 else f'0 results'
 
         self.blocks = [
             {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': f'> {self.domain if self.domain else self.website} in position `{self.serp_position}` for `{self.query}` from `{self.serp_searched_results}` results.'
+                    'text': f'> `{website}` in position `{self.serp_position or 0}` for `{self.query}` from {results}.'
                 },
                 'accessory': {
                     'type': 'button',
@@ -32,8 +40,8 @@ class SerpNotificationMessage:
                         'type': 'plain_text',
                         'text': 'Disable',
                     },
-                    'value': 'schedule_hash',
-                    'action_id': 'disable',
+                    'value': self.command,
+                    'action_id': 'schedule.disable',
                 },
             },
             {
@@ -45,19 +53,17 @@ class SerpNotificationMessage:
                     }
                 ]
             },
-            {
-                'type': 'divider'
-            },
         ]
 
 
 @dataclass
-class NotificationScheduledMessage:
+class ScheduledMessage:
 
     blocks: list[object] = field(init=False)
     channel: str
     domain: str
     domain_or_website: str
+    command: str
     interval: str
     type: str
     query: str
@@ -68,20 +74,13 @@ class NotificationScheduledMessage:
 
         self.blocks = [
             {
-                'type': 'header',
-                'text': {
-                    'type': 'plain_text',
-                    'text': f'{SERPLY_CONFIG.TYPE_NAME_MAP.get(self.type)} Schedule Configured',
-                }
-            },
-            {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
                     'text': '\n'.join([
-                        f'*{self.domain_or_website}:* {self.domain if self.domain else self.website}',
-                        f'*query:* `{self.query}`',
-                        f'*interval:* `{self.interval}`',
+                        f'> *Schedule*: {self.type} {self.interval}',
+                        f'> *{self.domain_or_website.title()}*: {self.domain if self.domain else self.website}',
+                        f'> *Query*: {self.query}',
                     ])
                 },
                 'accessory': {
@@ -90,8 +89,8 @@ class NotificationScheduledMessage:
                         'type': 'plain_text',
                         'text': 'Disable',
                     },
-                    'value': 'schedule_hash',
-                    'action_id': 'disable',
+                    'value': self.command,
+                    'action_id': 'schedule.disable',
                 },
             },
             {
@@ -99,11 +98,8 @@ class NotificationScheduledMessage:
                 'elements': [
                     {
                         'type': 'mrkdwn',
-                        'text': f':clock1: *Schedule* | Created by <@{self.user_id}> in <#{self.channel}>'
+                        'text': f':clock1: Schedule created by <@{self.user_id}>',
                     }
                 ]
-            },
-            {
-                'type': 'divider'
             },
         ]

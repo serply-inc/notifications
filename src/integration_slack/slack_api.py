@@ -16,7 +16,7 @@ REGEX_WEBSITE = r'<(https?://[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{
 
 @dataclass
 class SlackCommand:
-    text: str
+    command: str
     type: str = field(init=False)
     website: str = field(init=False)
     domain: str = field(init=False)
@@ -25,15 +25,15 @@ class SlackCommand:
     domain_or_website: str = field(init=False)
 
     def _search(self, pattern, default_value=None):
-        match = re.search(pattern, self.text)
+        match = re.search(pattern, self.command)
         if match:
             return match[1] if match.lastindex and match.lastindex >= 1 else default_value
         return default_value
 
     def __post_init__(self):
         self.type = self._search(REGEX_COMMAND_TYPE, '')
-        self.domain = self._search(REGEX_DOMAIN) if '|' in self.text else None
-        self.website = self._search(REGEX_WEBSITE) if 'http' in self.text else None
+        self.domain = self._search(REGEX_DOMAIN) if '|' in self.command else None
+        self.website = self._search(REGEX_WEBSITE) if 'http' in self.command else None
         self.query = re.sub(r'^q=', '', self._search(rf'["\'](.*)["\']'))
         self.interval = self._search(REGEX_INTERVAL, 'daily')
         self.domain_or_website = 'domain' if self.domain else 'website'

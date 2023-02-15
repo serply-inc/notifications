@@ -55,11 +55,11 @@ class SerplyStack(Stack):
             )
         )
 
-        slack_command_lambda = _lambda.Function(
+        slack_receive_lambda = _lambda.Function(
             self, 'SlackCommandLambdaFunction',
             runtime=RUNTIME,
             code=_lambda.Code.from_asset(config.SLACK_DIR),
-            handler='slack_command_lambda.handler',
+            handler='slack_receive_lambda.handler',
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
@@ -68,7 +68,7 @@ class SerplyStack(Stack):
             },
         )
 
-        event_bus.grant_put_events_to(slack_command_lambda)
+        event_bus.grant_put_events_to(slack_receive_lambda)
 
         slack_respond_lambda = _lambda.Function(
             self, 'SlackRespondLambdaFunction',
@@ -182,20 +182,20 @@ class SerplyStack(Stack):
             ),
         )
 
-        slack_command_lambda_integration = apigateway.LambdaIntegration(
-            handler=slack_command_lambda,
+        slack_receive_lambda_integration = apigateway.LambdaIntegration(
+            handler=slack_receive_lambda,
         )
 
         rest_api_resource = rest_api.root.add_resource('slack')
 
         rest_api_resource_proxy = rest_api_resource.add_proxy(
-            default_integration=slack_command_lambda_integration,
+            default_integration=slack_receive_lambda_integration,
             any_method=True,
         )
 
         rest_api_method = rest_api_resource.add_method(
             http_method='POST',
-            integration=slack_command_lambda_integration,
+            integration=slack_receive_lambda_integration,
         )
 
         dynamodb_table = dynamodb.Table(
@@ -232,5 +232,5 @@ class SerplyStack(Stack):
         #     ]
         # )
 
-        # slack_command_lambda_function.role.attach_inline_policy(ssm_inline_policy)
+        # slack_receive_lambda_function.role.attach_inline_policy(ssm_inline_policy)
         # serp_lambda_function.role.attach_inline_policy(ssm_inline_policy)

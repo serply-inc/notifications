@@ -5,12 +5,10 @@ from serply_config import SERPLY_CONFIG
 
 class EventBus:
 
-    def __init__(self, events_client: object) -> None:
+    def __init__(self, events_client: object, source: str = 'slack') -> None:
         self._events_client = events_client
 
     def put(self, detail_type: str, schedule: object, input: dict, headers: dict):
-
-        print(f'detail_type: {detail_type}')
 
         event = {
             'Source': 'serply',

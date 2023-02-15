@@ -27,6 +27,7 @@ def handler(event, context):
     )
 
     serp_notification = SerpNotification(
+        command=schedule.command,
         domain=schedule.domain,
         domain_or_website=schedule.domain_or_website,
         query=schedule.query,

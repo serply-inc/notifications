@@ -16,6 +16,7 @@ class Schedule:
     PK: str = field(init=False)
     SK: str = field(init=False)
     hash: str = field(init=False)
+    command: str
     query: str
     type: str = field(default_factory=default_schedule_type)
     account: str = field(default_factory=default_account)
@@ -40,6 +41,7 @@ class SerpNotification:
     PK: str = field(init=False)
     SK: str = field(init=False)
     hash: str = field(init=False)
+    command: str
     serp_position: int
     serp_searched_results: int
     serp_domain: str
@@ -96,6 +98,7 @@ def schedule_hash(SCHEDULE_KEY: str):
 
 def schedule_from_dict(data: dict):
     return Schedule(
+        command=data.get('command'),
         type=data.get('type'),
         domain=data.get('domain'),
         interval=data.get('interval'),
