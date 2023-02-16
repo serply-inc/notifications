@@ -20,17 +20,22 @@ def handler(event, context):
 
     schedule = schedule_from_dict(detail_schedule)
 
-    message = SerpNotificationMessage(
-        channel=detail_input.get('channel_id'),
-        serp_position=detail_schedule.get('serp_position'),
-        serp_searched_results=detail_schedule.get('serp_searched_results'),
-        command=schedule.command,
-        domain=schedule.domain,
-        domain_or_website=schedule.domain_or_website,
-        interval=schedule.interval,
-        query=schedule.query,
-        website=schedule.website,
-    )
+    if schedule.type not in [SERPLY_CONFIG.SCHEDULE_TYPE_SERP]:
+        raise Exception(f'Invalid schedule type: {schedule.type}')
+
+    if schedule.type == SERPLY_CONFIG.SCHEDULE_TYPE_SERP:
+
+        message = SerpNotificationMessage(
+            channel=detail_input.get('channel_id'),
+            serp_position=detail_input.get('serp_position'),
+            serp_searched_results=detail_input.get('serp_searched_results'),
+            command=schedule.command,
+            domain=schedule.domain,
+            domain_or_website=schedule.domain_or_website,
+            interval=schedule.interval,
+            query=schedule.query,
+            website=schedule.website,
+        )
 
     slack.notify(message)
 

@@ -1,5 +1,6 @@
 import boto3
 import json
+from serply_config import SERPLY_CONFIG
 from serply_database import schedule_from_dict
 from serply_events import EventBus
 from slack_api import SlackCommand
@@ -50,7 +51,8 @@ def command_response(event={}):
     # @todo validated signature or raise exception
 
     event_bus.put(
-        detail_type=schedule.type,
+        source=SERPLY_CONFIG.EVENT_SOURCE_SLACK,
+        detail_type=SERPLY_CONFIG.EVENT_SCHEDULE_SAVE,
         schedule=schedule,
         input=input,
         headers=headers,
@@ -109,9 +111,11 @@ def interaction_response(event={}):
 
     schedule = SlackCommand(command=command)
 
-    print(payload)
+    if action not in [SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE]:
+        raise Exception(f'Invalid action: {action}')
 
     event_bus.put(
+        source=SERPLY_CONFIG.EVENT_SOURCE_SLACK,
         detail_type=action,
         schedule=schedule,
         input=payload,

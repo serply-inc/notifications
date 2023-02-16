@@ -6,7 +6,7 @@ from serply_config import (
     default_schedule_type,
     default_domain_or_website,
     default_interval,
-    default_provider,
+    default_source,
     SERPLY_CONFIG,
 )
 
@@ -23,7 +23,7 @@ class Schedule:
     created_at: str = field(default_factory=datetime_string)
     domain_or_website: str = field(default_factory=default_domain_or_website)
     interval: str = field(default_factory=default_interval)
-    provider: str = field(default_factory=default_provider)
+    source: str = field(default_factory=default_source)
     domain: str = None
     website: str = None
     num: int = 100
@@ -44,15 +44,13 @@ class SerpNotification:
     command: str
     serp_position: int
     serp_searched_results: int
-    serp_domain: str
-    serp_query: str
     domain_or_website: str
     query: str
     type: str = 'serp'
     account: str = field(default_factory=default_account)
     created_at: str = field(default_factory=datetime_string)
     interval: str = field(default_factory=default_interval)
-    provider: str = field(default_factory=default_provider)
+    source: str = field(default_factory=default_source)
     domain: str = None
     website: str = None
     num: int = 100
@@ -73,7 +71,7 @@ class NotificationsDatabase:
             SERPLY_CONFIG.NOTIFICATION_TABLE_NAME
         )
 
-    def put(self, data):
+    def save(self, data):
         # Filter values that are None
         item = {k: v for k, v in asdict(data).items() if v is not None}
         return self._table.put_item(Item=item)

@@ -11,13 +11,13 @@ def handler(event, context):
 
     print(json.dumps(event))
 
-    # schedule = schedule_from_dict(event.get('detail').get('schedule'))
+    schedule = schedule_from_dict(event.get('detail').get('schedule'))
     
-    # notifications.put(schedule)
+    notifications.save(schedule)
 
-    # scheduler.schedule(
-    #     schedule=schedule,
-    #     event=event,
-    # )
-
+    scheduler.save_schedule(
+        schedule=schedule,
+        event=event,
+    )
+    
     return {'ok': True}

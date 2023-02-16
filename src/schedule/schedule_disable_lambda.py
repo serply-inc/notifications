@@ -1,9 +1,8 @@
 import boto3
 import json
-from serply_database import NotificationsDatabase, schedule_from_dict
+from serply_database import schedule_from_dict
 from serply_scheduler import NotificationScheduler
 
-notifications = NotificationsDatabase(boto3.resource('dynamodb'))
 scheduler = NotificationScheduler(boto3.client('scheduler'))
 
 
@@ -13,11 +12,6 @@ def handler(event, context):
 
     schedule = schedule_from_dict(event.get('detail').get('schedule'))
     
-    notifications.put(schedule)
-
-    scheduler.schedule(
-        schedule=schedule,
-        event=event,
-    )
-
+    scheduler.delete_schedule(schedule)
+    
     return {'ok': True}

@@ -99,11 +99,11 @@ class SerplyStack(Stack):
 
         slack_notify_lambda.role.add_managed_policy(scheduler_managed_policy)
 
-        notification_serp_lambda = _lambda.Function(
+        schedule_target_lambda = _lambda.Function(
             self, 'NotificationSerpLambdaFunction',
             runtime=RUNTIME,
             code=_lambda.Code.from_asset(config.NOTIFICATIONS_DIR),
-            handler='notification_serp_lambda.handler',
+            handler='schedule_target_lambda.handler',
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
@@ -113,49 +113,66 @@ class SerplyStack(Stack):
             },
         )
         
-        event_bus.grant_put_events_to(notification_serp_lambda)
+        event_bus.grant_put_events_to(schedule_target_lambda)
 
-        notification_put_lambda = _lambda.Function(
+        schedule_save_lambda = _lambda.Function(
             self, 'NotificationPutLambdaFunction',
             runtime=RUNTIME,
             code=_lambda.Code.from_asset(config.NOTIFICATIONS_DIR),
-            handler='notification_put_lambda.handler',
+            handler='schedule_save_lambda.handler',
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'SCHEDULE_TARGET_ARN': notification_serp_lambda.function_arn,
+                'SCHEDULE_TARGET_ARN': schedule_target_lambda.function_arn,
                 'SCHEDULE_ROLE_ARN': scheduler_role.role_arn,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
 
-        notification_put_lambda.role.add_managed_policy(scheduler_managed_policy)
+        schedule_save_lambda.role.add_managed_policy(scheduler_managed_policy)
 
-        slack_command_event_rule = events.Rule(
+        schedule_disable_lambda = _lambda.Function(
+            self, 'ScheduleDisableLambdaFunction',
+            runtime=RUNTIME,
+            code=_lambda.Code.from_asset(config.NOTIFICATIONS_DIR),
+            handler='schedule_disable_lambda.handler',
+            timeout=Duration.seconds(5),
+            layers=[lambda_layer],
+            environment={
+                'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
+                'STACK_NAME': config.STACK_NAME,
+                'STAGE': config.STAGE,
+            },
+        )
+        
+        schedule_disable_lambda.role.add_managed_policy(scheduler_managed_policy)
+
+        slack_save_event_rule = events.Rule(
             self, 'SlackCommandEventRule',
             event_bus=event_bus,
             event_pattern=events.EventPattern(
-                source=["serply"],
+                source=[config.EVENT_SOURCE_SLACK],
                 detail_type=[
-                    'serp',
-                    # 'search', # additional commands can be added in the future
+                    config.EVENT_SCHEDULE_SAVE,
                 ],
             ),
             targets=[
                 events_targets.LambdaFunction(slack_respond_lambda),
-                events_targets.LambdaFunction(notification_put_lambda),
+                events_targets.LambdaFunction(schedule_save_lambda),
             ],
         )
 
-        slack_command_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
+        slack_save_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
         slack_notify_event_rule = events.Rule(
             self, 'SlackNotifyEventRule',
             event_bus=event_bus,
             event_pattern=events.EventPattern(
-                source=["serply"],
-                detail_type=['serp.notify'],
+                source=[config.EVENT_SOURCE_SLACK],
+                detail_type=[
+                    config.EVENT_SCHEDULE_NOTIFY,
+                ],
             ),
             targets=[
                 events_targets.LambdaFunction(slack_notify_lambda),
@@ -163,6 +180,22 @@ class SerplyStack(Stack):
         )
 
         slack_notify_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
+
+        slack_disable_event_rule = events.Rule(
+            self, 'SlackDisableEventRule',
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=[config.EVENT_SOURCE_SLACK],
+                detail_type=[
+                    config.EVENT_SCHEDULE_DISABLE,
+                ],
+            ),
+            targets=[
+                events_targets.LambdaFunction(schedule_disable_lambda),
+            ],
+        )
+
+        slack_disable_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
@@ -213,9 +246,9 @@ class SerplyStack(Stack):
             removal_policy=RemovalPolicy.RETAIN if config.STAGE == 'prod' else RemovalPolicy.DESTROY,
         )
 
-        dynamodb_table.grant_read_write_data(notification_put_lambda)
+        dynamodb_table.grant_read_write_data(schedule_save_lambda)
 
-        dynamodb_table.grant_read_write_data(notification_serp_lambda)
+        dynamodb_table.grant_read_write_data(schedule_target_lambda)
 
         schedule_group = scheduler.CfnScheduleGroup(
             self, config.SCHEDULE_GROUP_NAME,

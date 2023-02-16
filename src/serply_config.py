@@ -30,6 +30,7 @@ class SerplyConfig:
     SCHEDULE_GROUP_NAME: str
     SCHEDULE_ROLE_ARN: str
     SCHEDULE_TARGET_ARN: str
+    SCHEDULE_TYPE_SERP: str
     SECRET_KEYS: list[str]
     SERPLY_API_KEY: str
     SERPLY_TIMEZONE: str
@@ -41,6 +42,11 @@ class SerplyConfig:
     STAGE: str
     STAGE_SUFFIX: str
     TYPE_NAME_MAP: dict
+    EVENT_SOURCE_SLACK: str
+    EVENT_SCHEDULE_SAVE: str
+    EVENT_SCHEDULE_NOTIFY: str
+    EVENT_SCHEDULE_DISABLE: str
+    EVENT_SCHEDULE_LIST: str
 
 
 SERPLY_CONFIG = SerplyConfig(
@@ -48,13 +54,14 @@ SERPLY_CONFIG = SerplyConfig(
     DEFAULT_ACCOUNT=getenv('ACCOUNT', '98a64bf66ad64b7aa23227d882d91249'),
     EVENT_BUS_NAME=f'{STACK_NAME}EventBus{STAGE_SUFFIX}',
     LAYER_DIR=f'{SRC_DIR}/layer',
-    NOTIFICATIONS_DIR=f'{SRC_DIR}/notifications',
+    NOTIFICATIONS_DIR=f'{SRC_DIR}/schedule',
     NOTIFICATION_TABLE_NAME=f'{STACK_NAME}Notifications{STAGE_SUFFIX}',
     ONE_TIME_INTERVALS=['once', 'mock'],
     ROOT_DIR=ROOT_DIR,
     SCHEDULE_GROUP_NAME=f'{STACK_NAME}ScheduleGroup{STAGE_SUFFIX}',
     SCHEDULE_ROLE_ARN=getenv('SCHEDULE_ROLE_ARN'),
     SCHEDULE_TARGET_ARN=getenv('SCHEDULE_TARGET_ARN'),
+    SCHEDULE_TYPE_SERP='serp',
     SECRET_KEYS=[
         'ACCOUNT',
         'SLACK_BOT_TOKEN',
@@ -66,12 +73,17 @@ SERPLY_CONFIG = SerplyConfig(
     SERPLY_TIMEZONE=getenv('SERPLY_TIMEZONE', 'America/Chicago'),
     SRC_DIR=SRC_DIR,
     SLACK_BOT_TOKEN=getenv('SLACK_BOT_TOKEN'),
-    SLACK_DIR=f'{SRC_DIR}/integration_slack',
+    SLACK_DIR=f'{SRC_DIR}/slack',
     STACK_NAME=STACK_NAME,
     STACK_NAME_FULL=STACK_NAME_FULL,
     STAGE=STAGE,
     STAGE_SUFFIX=STAGE_SUFFIX,
-    TYPE_NAME_MAP={'serp': 'SERP'}
+    TYPE_NAME_MAP={'serp': 'SERP'},
+    EVENT_SOURCE_SLACK='slack',
+    EVENT_SCHEDULE_SAVE='schedule.save',
+    EVENT_SCHEDULE_DISABLE='schedule.disable',
+    EVENT_SCHEDULE_NOTIFY='schedule.notify',
+    EVENT_SCHEDULE_LIST='schedule.list',
 )
 
 
@@ -84,7 +96,7 @@ def datetime_string():
 
 
 def default_schedule_type():
-    return 'serp'
+    return SERPLY_CONFIG.SCHEDULE_TYPE_SERP
 
 
 def default_domain_or_website():
@@ -95,8 +107,8 @@ def default_interval():
     return 'daily'
 
 
-def default_provider():
-    return 'slack'
+def default_source():
+    return SERPLY_CONFIG.EVENT_SOURCE_SLACK
 
 
 def get_parameter_name(key):

@@ -57,7 +57,7 @@ class SerpNotificationMessage:
 
 
 @dataclass
-class ScheduledMessage:
+class ScheduleMessage:
 
     blocks: list[object] = field(init=False)
     channel: str
@@ -85,12 +85,12 @@ class ScheduledMessage:
                 },
                 'accessory': {
                     'type': 'button',
+                    'value': self.command,
+                    'action_id': SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE,
                     'text': {
                         'type': 'plain_text',
                         'text': 'Disable',
                     },
-                    'value': self.command,
-                    'action_id': 'schedule.disable',
                 },
             },
             {

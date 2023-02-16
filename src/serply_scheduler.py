@@ -62,13 +62,11 @@ class NotificationScheduler:
 
         try:
 
-            response = self._scheduler_client.delete_schedule(
+            self._scheduler_client.delete_schedule(
                 GroupName=SERPLY_CONFIG.SCHEDULE_GROUP_NAME,
                 ClientToken=schedule.hash,
                 Name=schedule.hash,
             )
-
-            print(response)
 
             return ScheduleResponse(name=schedule.hash)
 
@@ -91,9 +89,9 @@ class NotificationScheduler:
 
             return ScheduleResponse(name=schedule.hash)
 
-    def schedule(self, schedule: Schedule, event: dict = {}):
+    def save_schedule(self, schedule: Schedule, event: dict = {}):
 
-        self.delete_schedule(schedule=schedule)
+        self.delete_schedule(schedule)
 
         schedule = self.create_schedule(
             schedule=schedule,
