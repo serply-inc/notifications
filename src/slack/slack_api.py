@@ -85,10 +85,9 @@ class SlackClient:
 
             payload = {
                 'blocks': message.blocks,
+                'replace_original': "true" if message.replace_original else "false",
                 'response_type': 'in_channel',
             }
-
-            print(payload)
 
             request = json.dumps(payload).encode('utf-8')
 

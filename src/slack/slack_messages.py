@@ -1,12 +1,74 @@
+from pydash import objects
 from dataclasses import dataclass, field
 from serply_config import SERPLY_CONFIG
+
+@dataclass
+class ScheduleMessage:
+
+    blocks: list[dict] = field(init=False)
+    domain: str
+    domain_or_website: str
+    command: str
+    interval: str
+    type: str
+    query: str
+    user_id: str
+    website: str
+    channel: str = None
+    enabled: bool = True
+    replace_original: bool = False
+
+    def __post_init__(self):
+        
+        action_id = SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE if self.enabled else SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE
+        status = "enabled" if self.enabled else "disabled"
+
+        button = {
+            'type': 'button',
+            'value': self.command,
+            'action_id': action_id,
+            'text': {
+                'type': 'plain_text',
+                'text': 'Disable' if self.enabled else 'Enable',
+            },
+        }
+        
+        if not self.enabled:
+            button['style'] = 'primary'
+
+        self.blocks = [
+            {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join([
+                        f'> *Schedule*: {self.type} {self.interval}',
+                        f'> *{self.domain_or_website.title()}*: {self.domain if self.domain else self.website}',
+                        f'> *Query*: {self.query}',
+                        f'> *Status*: {status}',
+                    ])
+                },
+            },
+            {
+                "type": "actions",
+                "elements": [button]
+            },
+            {
+                'type': 'context',
+                'elements': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': f':clock1: Schedule created by <@{self.user_id}>',
+                    }
+                ]
+            },
+        ]
 
 
 @dataclass
 class SerpNotificationMessage:
 
-    blocks: list[object] = field(init=False)
-    channel: str
+    blocks: list[dict] = field(init=False)
     domain: str
     domain_or_website: str
     command: str
@@ -15,7 +77,9 @@ class SerpNotificationMessage:
     serp_position: int
     serp_searched_results: str
     website: str
+    channel: str = None
     num: int = 100
+    replace_original: bool = False
 
     def __post_init__(self):
 
@@ -34,15 +98,6 @@ class SerpNotificationMessage:
                     'type': 'mrkdwn',
                     'text': f'> `{website}` in position `{self.serp_position or 0}` for `{self.query}` from {results}.'
                 },
-                'accessory': {
-                    'type': 'button',
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Disable',
-                    },
-                    'value': self.command,
-                    'action_id': 'schedule.disable',
-                },
             },
             {
                 'type': 'context',
@@ -50,55 +105,6 @@ class SerpNotificationMessage:
                     {
                         'type': 'mrkdwn',
                         'text': f':bell: *SERP Notification* | {TEXT_ONE_TIME if self.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS else TEXT_YOU_RECEIVE}'
-                    }
-                ]
-            },
-        ]
-
-
-@dataclass
-class ScheduleMessage:
-
-    blocks: list[object] = field(init=False)
-    channel: str
-    domain: str
-    domain_or_website: str
-    command: str
-    interval: str
-    type: str
-    query: str
-    user_id: str
-    website: str
-
-    def __post_init__(self):
-
-        self.blocks = [
-            {
-                'type': 'section',
-                'text': {
-                    'type': 'mrkdwn',
-                    'text': '\n'.join([
-                        f'> *Schedule*: {self.type} {self.interval}',
-                        f'> *{self.domain_or_website.title()}*: {self.domain if self.domain else self.website}',
-                        f'> *Query*: {self.query}',
-                    ])
-                },
-                'accessory': {
-                    'type': 'button',
-                    'value': self.command,
-                    'action_id': SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE,
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Disable',
-                    },
-                },
-            },
-            {
-                'type': 'context',
-                'elements': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': f':clock1: Schedule created by <@{self.user_id}>',
                     }
                 ]
             },

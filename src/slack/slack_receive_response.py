@@ -25,9 +25,9 @@ def querystring_asdict(querystring: str):
 def default_response(event={}):
     return {
         'statusCode': 200,
-        'body': '',
+        'body': '{}',
         'headers': {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'application/json',
         },
     }
 
@@ -111,7 +111,10 @@ def interaction_response(event={}):
 
     schedule = SlackCommand(command=command)
 
-    if action not in [SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE]:
+    if action not in [
+        SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE,
+        SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE,
+    ]:
         raise Exception(f'Invalid action: {action}')
 
     event_bus.put(
@@ -124,8 +127,8 @@ def interaction_response(event={}):
 
     return {
         'statusCode': 200,
-        'body': '',
+        'body': '{}',
         'headers': {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'application/json',
         },
     }

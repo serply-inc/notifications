@@ -158,8 +158,8 @@ class SerplyStack(Stack):
                 ],
             ),
             targets=[
-                events_targets.LambdaFunction(slack_respond_lambda),
                 events_targets.LambdaFunction(schedule_save_lambda),
+                events_targets.LambdaFunction(slack_respond_lambda),
             ],
         )
 
@@ -192,10 +192,28 @@ class SerplyStack(Stack):
             ),
             targets=[
                 events_targets.LambdaFunction(schedule_disable_lambda),
+                events_targets.LambdaFunction(slack_respond_lambda),
             ],
         )
 
         slack_disable_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
+
+        slack_enable_event_rule = events.Rule(
+            self, 'SlackEnableEventRule',
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=[config.EVENT_SOURCE_SLACK],
+                detail_type=[
+                    config.EVENT_SCHEDULE_ENABLE,
+                ],
+            ),
+            targets=[
+                # events_targets.LambdaFunction(schedule_disable_lambda),
+                events_targets.LambdaFunction(slack_respond_lambda),
+            ],
+        )
+
+        slack_enable_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
         cors_options = apigateway.CorsOptions(
             allow_origins=apigateway.Cors.ALL_ORIGINS,
