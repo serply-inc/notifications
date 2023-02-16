@@ -14,6 +14,9 @@ def handler(event, context):
 
     schedule = schedule_from_dict(detail_schedule)
 
-    scheduler.delete_schedule(schedule)
+    scheduler.save_schedule(
+        schedule=schedule,
+        event=event,
+    )
 
     return {'ok': True}

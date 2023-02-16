@@ -140,13 +140,29 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
-                'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
         )
         
         schedule_disable_lambda.role.add_managed_policy(scheduler_managed_policy)
+
+        schedule_enable_lambda = _lambda.Function(
+            self, 'ScheduleEnableLambdaFunction',
+            runtime=RUNTIME,
+            code=_lambda.Code.from_asset(config.NOTIFICATIONS_DIR),
+            handler='schedule_enable_lambda.handler',
+            timeout=Duration.seconds(5),
+            layers=[lambda_layer],
+            environment={
+                'SCHEDULE_TARGET_ARN': schedule_target_lambda.function_arn,
+                'SCHEDULE_ROLE_ARN': scheduler_role.role_arn,
+                'STACK_NAME': config.STACK_NAME,
+                'STAGE': config.STAGE,
+            },
+        )
+        
+        schedule_enable_lambda.role.add_managed_policy(scheduler_managed_policy)
 
         slack_save_event_rule = events.Rule(
             self, 'SlackCommandEventRule',
@@ -208,7 +224,7 @@ class SerplyStack(Stack):
                 ],
             ),
             targets=[
-                # events_targets.LambdaFunction(schedule_disable_lambda),
+                events_targets.LambdaFunction(schedule_enable_lambda),
                 events_targets.LambdaFunction(slack_respond_lambda),
             ],
         )
