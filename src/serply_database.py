@@ -84,12 +84,17 @@ def domain_or_website(domain: str = None):
 
 
 def schedule_key(object):
-    return '#'.join([
+    attributes = [
         object.type,
         domain_or_website(object.domain),
         object.domain if object.domain else object.website,
         object.query,
-    ])
+    ]
+    
+    if object.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
+        attributes.append(object.interval)
+    
+    return '#'.join(attributes)
 
 def schedule_hash(SCHEDULE_KEY: str):
     # 32 bytes will result in a 64 character hash

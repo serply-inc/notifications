@@ -27,7 +27,6 @@ def handler(event, context):
         command=schedule.command,
         domain=schedule.domain,
         domain_or_website=schedule.domain_or_website,
-        hash=schedule.hash,
         interval=schedule.interval,
         query=schedule.query,
         website=schedule.website,
