@@ -131,7 +131,7 @@ def schedule_from_dict(data: dict):
         interval=data.get('interval'),
         query=data.get('query'),
         command=data.get('command'),
-        enabled=data.get('enabled'),
+        enabled=True if data.get('enabled') is None else data.get('enabled'),
         domain=data.get('domain'),
         type=data.get('type'),
         website=data.get('website'),

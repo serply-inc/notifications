@@ -22,4 +22,4 @@ def handler(event, context):
 
     notifications.save(schedule)
 
-    return {'ok': True}
+    return event

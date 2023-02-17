@@ -46,7 +46,9 @@ class SerplyConfig:
     EVENT_SCHEDULE_SAVE: str
     EVENT_SCHEDULE_NOTIFY: str
     EVENT_SCHEDULE_DISABLE: str
+    EVENT_SCHEDULE_DISABLE_FROM_LIST: str
     EVENT_SCHEDULE_ENABLE: str
+    EVENT_SCHEDULE_ENABLE_FROM_LIST: str
     EVENT_SCHEDULE_LIST: str
 
 
@@ -83,7 +85,9 @@ SERPLY_CONFIG = SerplyConfig(
     EVENT_SOURCE_SLACK='slack',
     EVENT_SCHEDULE_SAVE='schedule.save',
     EVENT_SCHEDULE_DISABLE='schedule.disable',
+    EVENT_SCHEDULE_DISABLE_FROM_LIST='schedule.disable_from_list',
     EVENT_SCHEDULE_ENABLE='schedule.enable',
+    EVENT_SCHEDULE_ENABLE_FROM_LIST='schedule.enable_from_list',
     EVENT_SCHEDULE_NOTIFY='schedule.notify',
     EVENT_SCHEDULE_LIST='schedule.list',
 )

@@ -35,6 +35,7 @@ def handler(event, context):
             response_url=detail_input.get('response_url'),
             message=message,
         )
+
     elif detail_type == SERPLY_CONFIG.EVENT_SCHEDULE_LIST:
         schedules = notifications.schedules()
         message = ScheduleListMessage(
@@ -42,6 +43,20 @@ def handler(event, context):
             schedules=schedules,
         )
         slack.notify(message)
+
+    elif detail_type in [
+        SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE_FROM_LIST,
+        SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE_FROM_LIST,
+    ]:
+        schedules = notifications.schedules()
+        message = ScheduleListMessage(
+            schedules=schedules,
+            replace_original=True,
+        )
+        slack.respond(
+            response_url=detail_input.get('response_url'),
+            message=message,
+        )
 
     elif detail_type == SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE:
         schedule = SlackCommand(
@@ -63,6 +78,7 @@ def handler(event, context):
             response_url=detail_input.get('response_url'),
             message=message,
         )
+
     elif detail_type == SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE:
         schedule = SlackCommand(
             command=objects.get(detail_input, 'actions[0].value'),

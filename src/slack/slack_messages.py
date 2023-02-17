@@ -127,7 +127,7 @@ class ScheduleListMessage:
 
         for schedule in self.schedules:
 
-            action_id = SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE if schedule.enabled else SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE
+            action_id = SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE_FROM_LIST if schedule.enabled else SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE_FROM_LIST
             status = "enabled" if schedule.enabled else "disabled"
 
             button = {

@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_events_targets as events_targets,
     aws_iam as iam,
     aws_lambda as _lambda,
+    aws_lambda_destinations as _lambda_destinations,
     aws_scheduler as scheduler,
     Duration,
     RemovalPolicy,
@@ -144,6 +145,9 @@ class SerplyStack(Stack):
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
+            on_success=_lambda_destinations.LambdaDestination(slack_respond_lambda,
+                response_only=True
+            ),
         )
         
         schedule_disable_lambda.role.add_managed_policy(scheduler_managed_policy)
@@ -161,6 +165,9 @@ class SerplyStack(Stack):
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
+            on_success=_lambda_destinations.LambdaDestination(slack_respond_lambda,
+                response_only=True
+            ),
         )
         
         schedule_enable_lambda.role.add_managed_policy(scheduler_managed_policy)
@@ -221,11 +228,11 @@ class SerplyStack(Stack):
                 source=[config.EVENT_SOURCE_SLACK],
                 detail_type=[
                     config.EVENT_SCHEDULE_DISABLE,
+                    config.EVENT_SCHEDULE_DISABLE_FROM_LIST,
                 ],
             ),
             targets=[
                 events_targets.LambdaFunction(schedule_disable_lambda),
-                events_targets.LambdaFunction(slack_respond_lambda),
             ],
         )
 
@@ -238,11 +245,11 @@ class SerplyStack(Stack):
                 source=[config.EVENT_SOURCE_SLACK],
                 detail_type=[
                     config.EVENT_SCHEDULE_ENABLE,
+                    config.EVENT_SCHEDULE_ENABLE_FROM_LIST,
                 ],
             ),
             targets=[
                 events_targets.LambdaFunction(schedule_enable_lambda),
-                events_targets.LambdaFunction(slack_respond_lambda),
             ],
         )
 
@@ -319,16 +326,3 @@ class SerplyStack(Stack):
             self, config.SCHEDULE_GROUP_NAME,
             name=config.SCHEDULE_GROUP_NAME,
         )
-
-        # ssm_inline_policy = iam.Policy(
-        #     self, 'NotificationsSSMParametersReadPolicy',
-        #     statements=[
-        #         iam.PolicyStatement(
-        #             actions=['ssm:GetParameter'],
-        #             resources=[f'arn:aws:ssm:*:*:parameter/serply/{STAGE}/*'],
-        #         )
-        #     ]
-        # )
-
-        # slack_receive_lambda_function.role.attach_inline_policy(ssm_inline_policy)
-        # serp_lambda_function.role.attach_inline_policy(ssm_inline_policy)

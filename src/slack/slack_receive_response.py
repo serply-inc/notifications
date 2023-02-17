@@ -122,7 +122,9 @@ def interaction_response(event={}):
 
     if action not in [
         SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE,
+        SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE_FROM_LIST,
         SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE,
+        SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE_FROM_LIST,
     ]:
         raise Exception(f'Invalid action: {action}')
 
