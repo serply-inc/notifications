@@ -1,6 +1,8 @@
 from pydash import objects
 from dataclasses import dataclass, field
 from serply_config import SERPLY_CONFIG
+from serply_database import Schedule
+
 
 @dataclass
 class ScheduleMessage:
@@ -19,7 +21,7 @@ class ScheduleMessage:
     replace_original: bool = False
 
     def __post_init__(self):
-        
+
         action_id = SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE if self.enabled else SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE
         status = "enabled" if self.enabled else "disabled"
 
@@ -32,7 +34,7 @@ class ScheduleMessage:
                 'text': 'Disable' if self.enabled else 'Enable',
             },
         }
-        
+
         if not self.enabled:
             button['style'] = 'primary'
 
@@ -109,3 +111,65 @@ class SerpNotificationMessage:
                 ]
             },
         ]
+
+
+@dataclass
+class ScheduleListMessage:
+
+    blocks: list[dict] = field(init=False)
+    schedules: list[Schedule]
+    channel: str = None
+    replace_original: bool = False
+
+    def __post_init__(self):
+
+        self.blocks = []
+
+        for schedule in self.schedules:
+
+            action_id = SERPLY_CONFIG.EVENT_SCHEDULE_DISABLE if schedule.enabled else SERPLY_CONFIG.EVENT_SCHEDULE_ENABLE
+            status = "enabled" if schedule.enabled else "disabled"
+
+            button = {
+                'type': 'button',
+                'value': schedule.command,
+                'action_id': action_id,
+                'text': {
+                    'type': 'plain_text',
+                    'text': 'Disable' if schedule.enabled else 'Enable',
+                },
+            }
+
+            if not schedule.enabled:
+                button['style'] = 'primary'
+
+            self.blocks.append({
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join([
+                        f'> *Schedule*: {schedule.type} {schedule.interval}',
+                        f'> *{schedule.domain_or_website.title()}*: {schedule.domain if schedule.domain else schedule.website}',
+                        f'> *Query*: {schedule.query}',
+                        f'> *Status*: {status}',
+                    ])
+                },
+            })
+            self.blocks.append({
+                "type": "actions",
+                "elements": [button]
+            })
+            self.blocks.append({
+                'type': 'divider',
+            })
+        
+        self.blocks.pop()
+        self.blocks.append({
+            'type': 'context',
+            'elements': [
+                {
+                    'type': 'mrkdwn',
+                    'text': f':gear: Click to Enable or Disable a schedule.',
+                }
+            ]
+        })

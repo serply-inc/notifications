@@ -8,7 +8,7 @@ from serply_config import SERPLY_CONFIG
 http = PoolManager()
 
 
-REGEX_COMMAND_TYPE = r'^(serp)\s'
+REGEX_COMMAND_TYPE = r'^(serp|list)\s?'
 REGEX_INTERVAL = r'\s(once|mock|daily|weekly|monthly)\s?'
 REGEX_DOMAIN = r'\|([a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,})>'
 REGEX_WEBSITE = r'<(https?://[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,})>'
@@ -34,7 +34,7 @@ class SlackCommand:
         self.type = self._search(REGEX_COMMAND_TYPE, '')
         self.domain = self._search(REGEX_DOMAIN) if '|' in self.command else None
         self.website = self._search(REGEX_WEBSITE) if 'http' in self.command else None
-        self.query = re.sub(r'^q=', '', self._search(rf'["\'](.*)["\']'))
+        self.query = self._search(rf'["\'](.*)["\']')
         self.interval = self._search(REGEX_INTERVAL, 'daily')
         self.domain_or_website = 'domain' if self.domain else 'website'
 

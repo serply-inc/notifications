@@ -16,6 +16,7 @@ class Schedule:
     PK: str = field(init=False)
     SK: str = field(init=False)
     hash: str = field(init=False)
+    collection: str = field(init=False)
     command: str
     query: str
     type: str = field(default_factory=default_schedule_type)
@@ -25,6 +26,7 @@ class Schedule:
     interval: str = field(default_factory=default_interval)
     source: str = field(default_factory=default_source)
     domain: str = None
+    enabled: bool = True
     website: str = None
     num: int = 100
 
@@ -34,6 +36,7 @@ class Schedule:
         self.SK = SCHEDULE_KEY
         self.domain_or_website = domain_or_website(self.domain)
         self.hash = schedule_hash(SCHEDULE_KEY)
+        self.collection = f'{self.account}#schedules'
 
 
 @dataclass
@@ -41,6 +44,7 @@ class SerpNotification:
     PK: str = field(init=False)
     SK: str = field(init=False)
     hash: str = field(init=False)
+    collection: str = field(init=False)
     command: str
     serp_position: int
     serp_searched_results: int
@@ -57,11 +61,13 @@ class SerpNotification:
 
     def __post_init__(self):
         SCHEDULE_KEY = 'schedule_' + schedule_key(self)
-        NOTIFICATION_KEY = 'notification_' + schedule_key(self) + f'#{self.created_at}'
+        NOTIFICATION_KEY = 'notification_' + \
+            schedule_key(self) + f'#{self.created_at}'
         self.PK = SCHEDULE_KEY
         self.SK = NOTIFICATION_KEY
         self.domain_or_website = domain_or_website(self.domain)
         self.hash = schedule_hash(SCHEDULE_KEY)
+        self.collection = f'{self.account}#serp'
 
 
 class NotificationsDatabase:
@@ -76,6 +82,23 @@ class NotificationsDatabase:
         item = {k: v for k, v in asdict(data).items() if v is not None}
         return self._table.put_item(Item=item)
 
+    def schedules(self) -> list[Schedule]:
+        response = self._table.query(
+            IndexName='CollectionIndex',
+            KeyConditions={
+                'collection': {
+                    'AttributeValueList': [f'{default_account()}#schedules'],
+                    'ComparisonOperator': 'EQ',
+                },
+                'SK': {
+                    'AttributeValueList': ['schedule_'],
+                    'ComparisonOperator': 'BEGINS_WITH',
+                }
+            },
+        )
+
+        return map(schedule_from_dict, response.get('Items') or [])
+
 
 def domain_or_website(domain: str = None):
     return 'domain' if domain else 'website'
@@ -83,16 +106,20 @@ def domain_or_website(domain: str = None):
 
 def schedule_key(object):
     attributes = [
+        object.account,
         object.type,
         domain_or_website(object.domain),
         object.domain if object.domain else object.website,
         object.query,
     ]
-    
+
     if object.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
         attributes.append(object.interval)
-    
+
+    attributes = list(filter(lambda a: a is not None, attributes))
+
     return '#'.join(attributes)
+
 
 def schedule_hash(SCHEDULE_KEY: str):
     # 32 bytes will result in a 64 character hash
@@ -101,10 +128,12 @@ def schedule_hash(SCHEDULE_KEY: str):
 
 def schedule_from_dict(data: dict):
     return Schedule(
-        command=data.get('command'),
-        type=data.get('type'),
-        domain=data.get('domain'),
         interval=data.get('interval'),
-        website=data.get('website'),
         query=data.get('query'),
+        command=data.get('command'),
+        enabled=data.get('enabled'),
+        domain=data.get('domain'),
+        type=data.get('type'),
+        website=data.get('website'),
+        # num=data.get('num'), # @todo parse number
     )

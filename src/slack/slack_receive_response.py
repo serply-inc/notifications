@@ -46,17 +46,26 @@ def command_response(event={}):
 
     headers = event.get('headers')
     input = querystring_asdict(event.get('body'))
-    schedule = SlackCommand(command=input.get('text'))
+    command = SlackCommand(command=input.get('text'))
 
     # @todo validated signature or raise exception
 
-    event_bus.put(
-        source=SERPLY_CONFIG.EVENT_SOURCE_SLACK,
-        detail_type=SERPLY_CONFIG.EVENT_SCHEDULE_SAVE,
-        schedule=schedule,
-        input=input,
-        headers=headers,
-    )
+    if command.type == 'list':
+        event_bus.put(
+            source=SERPLY_CONFIG.EVENT_SOURCE_SLACK,
+            detail_type=SERPLY_CONFIG.EVENT_SCHEDULE_LIST,
+            schedule=command,
+            input=input,
+            headers=headers,
+        )
+    else:
+        event_bus.put(
+            source=SERPLY_CONFIG.EVENT_SOURCE_SLACK,
+            detail_type=SERPLY_CONFIG.EVENT_SCHEDULE_SAVE,
+            schedule=command,
+            input=input,
+            headers=headers,
+        )
 
     return {
         'statusCode': 200,

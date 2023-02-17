@@ -78,6 +78,7 @@ class SerplyStack(Stack):
             timeout=Duration.seconds(5),
             layers=[lambda_layer],
             environment={
+                'SLACK_BOT_TOKEN': config.SLACK_BOT_TOKEN,
                 'STACK_NAME': config.STACK_NAME,
                 'STAGE': config.STAGE,
             },
@@ -181,6 +182,22 @@ class SerplyStack(Stack):
 
         slack_save_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
 
+        slack_list_event_rule = events.Rule(
+            self, 'SlackListEventRule',
+            event_bus=event_bus,
+            event_pattern=events.EventPattern(
+                source=[config.EVENT_SOURCE_SLACK],
+                detail_type=[
+                    config.EVENT_SCHEDULE_LIST,
+                ],
+            ),
+            targets=[
+                events_targets.LambdaFunction(slack_respond_lambda),
+            ],
+        )
+
+        slack_list_event_rule.apply_removal_policy(RemovalPolicy.DESTROY)
+
         slack_notify_event_rule = events.Rule(
             self, 'SlackNotifyEventRule',
             event_bus=event_bus,
@@ -279,10 +296,24 @@ class SerplyStack(Stack):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.RETAIN if config.STAGE == 'prod' else RemovalPolicy.DESTROY,
         )
+        
+        dynamodb_table.add_global_secondary_index(
+            index_name='CollectionIndex',
+            partition_key=dynamodb.Attribute(
+                name="collection",
+                type=dynamodb.AttributeType.STRING,
+            ),
+            sort_key=dynamodb.Attribute(
+                name="SK",
+                type=dynamodb.AttributeType.STRING,
+            ),
+        )
 
+        dynamodb_table.grant_read_write_data(schedule_disable_lambda)
+        dynamodb_table.grant_read_write_data(schedule_enable_lambda)
         dynamodb_table.grant_read_write_data(schedule_save_lambda)
-
         dynamodb_table.grant_read_write_data(schedule_target_lambda)
+        dynamodb_table.grant_read_data(slack_respond_lambda)
 
         schedule_group = scheduler.CfnScheduleGroup(
             self, config.SCHEDULE_GROUP_NAME,

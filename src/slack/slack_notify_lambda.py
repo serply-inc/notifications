@@ -24,7 +24,6 @@ def handler(event, context):
         raise Exception(f'Invalid schedule type: {schedule.type}')
 
     if schedule.type == SERPLY_CONFIG.SCHEDULE_TYPE_SERP:
-
         message = SerpNotificationMessage(
             channel=detail_input.get('channel_id'),
             serp_position=detail_input.get('serp_position'),
@@ -36,11 +35,9 @@ def handler(event, context):
             query=schedule.query,
             website=schedule.website,
         )
-
-    slack.notify(message)
+        slack.notify(message)
 
     if schedule.interval in SERPLY_CONFIG.ONE_TIME_INTERVALS:
-
         scheduler.delete_schedule(schedule)
 
     return {'ok': True}

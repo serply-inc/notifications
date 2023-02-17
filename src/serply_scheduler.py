@@ -15,8 +15,8 @@ class NotificationScheduler:
 
     intervals = {
         'daily': 'rate(1 day)',
-        'weekly': 'rate(1 week)',
-        'monthly': 'rate(1 month)',
+        'weekly': 'rate(7 days)',
+        'monthly': 'rate(30 days)',
     }
 
     attempts = {
