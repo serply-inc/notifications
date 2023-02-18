@@ -1,6 +1,6 @@
 from dataclasses import asdict
 from slack_api import SlackCommand
-from slack_command_lambda import querystring_asdict
+from slack_receive_lambda import querystring_asdict
 from urllib.parse import parse_qs
 
 commands = {

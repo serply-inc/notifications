@@ -14,9 +14,6 @@ class SerpResponse:
     position: int
     domain: str
     query: str
-    title: str
-    link: str
-    description: str
 
 
 class SerplyClient:
@@ -43,7 +40,7 @@ class SerplyClient:
             )
         
         if domain is None and website is None:
-            raise Exception('SerplyClient.serp: domain or website required.')
+            raise Exception('SerplyClient: domain or website required.')
 
         data = {
             'q': query,
@@ -66,9 +63,6 @@ class SerplyClient:
             position=response.get('position'),
             domain=response.get('domain'),
             query=response.get('query'),
-            title=response.get('result').get('title'),
-            description=response.get('result').get('description'),
-            link=response.get('result').get('link'),
         )
 
     def serpMock(
@@ -82,9 +76,6 @@ class SerplyClient:
             position=randint(15, 50),
             domain=domain if domain else website,
             query=query,
-            title='Test title for SERP mock response',
-            description='Test description for SERP mock response',
-            link='https://example.com/',
         )
 
     def get(self, path: str, data: dict):

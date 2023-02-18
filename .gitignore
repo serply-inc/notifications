@@ -23,3 +23,9 @@ slack_manifest.*.yaml
 
 notes
 template.yaml
+
+
+
+
+
+.DS_Store
